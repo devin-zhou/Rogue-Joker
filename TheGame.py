@@ -8,7 +8,7 @@ baseCards1 = [
 	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
     ];
 
-# altered with a lot of 1s
+# altered with a lot of 1s for testing
 baseCards = [
         "1C", "1C", "1C", "1C", "1C", "1C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
 		"1D", "2D", "3D", "1D", "1D", "1D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
@@ -23,21 +23,23 @@ deck = [
 	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
     ];
 
-#what are these values
-handChips = [
-  [160, 16, 50, 3],
-  [140, 14, 40, 4],
-  [120, 12, 35, 3],
-  [100,  8, 40, 4],
-  [ 60,  7, 30, 3],
-  [ 40,  4, 25, 2],
-  [ 35,  4, 15, 2],
-  [ 30,  4, 30, 3],
-  [ 30,  3, 20, 2],
-  [ 20,  2, 20, 1],
-  [ 10,  2, 15, 1],
-  [  5,  1, 10, 1]
+#what table needcheck
+chipMultTable = [
+  [160, 16, 50, 3, 1],
+  [140, 14, 40, 4, 1],
+  [120, 12, 35, 3, 1],
+  [100,  8, 40, 4, 1],
+  [ 60,  7, 30, 3, 1],
+  [ 40,  4, 25, 2, 1],
+  [ 35,  4, 15, 2, 1],
+  [ 30,  4, 30, 3, 1],
+  [ 30,  3, 20, 2, 1],
+  [ 20,  2, 20, 1, 1],
+  [ 10,  2, 15, 1, 1],
+  [  5,  1, 10, 1, 1] # high
 ]
+
+# blue chip, red mult, this * handLVL for chip scale, this * hand level for mult scale, handLVL
 
 debugMode = 0
 
@@ -56,10 +58,12 @@ thePokerHand = ["hasPair", "hasTwoPair", "hasThreeOfAKind", "hasFullHouse"
 
 # parallel list vs dict
 hasHand = {
-    "hasPair": False,       "hasTwoPair": False,
-    "hasThreeOfAKind": False,   "hasFullHouse": False,
-    "hasFourOfAKind": False,    "hasFiveOfAKind": False,
-    "hasStraight": False,   "hasFlush": False
+    "hasFlushFive": False, "hasFlushHouse": False,
+    "hasFiveOfAKind": False, "hasStraightFlush": False,
+    "hasFlush": False, "hasStraight": False,
+    "hasFiveOfAKind": False, "hasFourOfAKind": False,
+    "hasFullHouse": False, "hasThreeOfAKind": False,
+    "hasTwoPair": False, "hasPair": False
 }
 
 handRankings = {
@@ -77,36 +81,12 @@ handRankings = {
     "flushFive": 11
 }
 
-# Notes
-'''
-Flow
-    Hand type, resolve jokers that require knowledge of hand, knowledge of joker order, , knowledge of jokers, 
-    score cards, score cards-in-hand (steel), score jokers, 
-
-PAIRS / THREE OF A KIND / FOUR OF A KIND
-    Reference checks for x of a kind by checking for 4 of a Kind -> found pair, 3, and 4 of a kind then going down until pair
-    4OAK: if hand size == 4, then checks if list[0] == list[3]
-        then if hand size == 5, check (if list[0] == list[3]) or (if list[1] == list[4])
-
-    5 of a kind, flush five, flush house, straight flush are checked on their own
-
-order: flush 5, flush house, 5 of a kind, straight flush, 4 of a kind, full house, flush, straight, 3 of a kind, 2 pair, pair, high card
-
-
-Flush: Flushes are stored in an array of arrays [[], [], [], []]. Each suit corresponds to an index and is pushed into the corresponding array.
-    Index and suit are setup so that Smeared Joker can be found using modulus:
-    Eg: (this.SmearedJoker ? card[SUIT] % 2 == i : card[SUIT] === i)
-
-'''
-
-
-
 class card:
     def __init__(self): 
         self.rank = 1
         self.suit = "C"
         self.mult = 0
-        self.chips = self.rank # idk if i need this declaration? same thing is in the Else of the Pattern Matching
+        self.chips = self.rank # idk if need this declaration, same thing is in the Else of the Pattern Matching
         match self.rank:
             case 1:
                 self.chips = 11
@@ -128,7 +108,6 @@ def generateHand(handSize) -> tuple:
 def discardDraw(hand, deck, handSize) -> tuple:
     numNewCards = handSize - len(hand)
     return orderRank(hand + deck[0:numNewCards]), deck[numNewCards:]
-
 
 def flush(hand: list, flushSize = 5) -> bool:
     suitCount = {"S": 0, "H": 0, "D": 0, "C": 0}
@@ -162,9 +141,9 @@ def straight(hand: list, straightSize = 5) -> bool:
         print("\nStraight Check")
         print("sorted hand", orderedHand)
         print("sums", sum(orderedHand), orderedHand[0] * 5 + 10)
-        print("first card == last card minus 4:", orderedHand[0], orderedHand[4] - 4)
+        print("first card == last card minus 4:", orderedHand[0], orderedHand[-1] - 4)
 
-    return len(orderedHand) == straightSize and sum(orderedHand) == orderedHand[0] * 5 + 10 and orderedHand[0] == orderedHand[4] - 4
+    return len(orderedHand) == straightSize and sum(orderedHand) == orderedHand[0] * 5 + 10 and orderedHand[0] == orderedHand[-1] - 4
 
 def fiveOfAKind(hand: list) -> bool:
     orderedHand = orderRankNumbers(hand)
@@ -262,7 +241,7 @@ def fullHouse(hand: list) -> tuple:
         print(hasPair, pairIndex)
 
     if hasThree and hasPair:
-        return pairIndex + threeIndex
+        return True, pairIndex + threeIndex
     return False, None
 
 # Orders the hand suit. Ordered by rank within each respective suit.
@@ -287,11 +266,10 @@ def orderRankNumbers(hand: list) -> list:
     orderedHand = [int(card[:-1]) for card in hand] # Removes the suit character at the end of each index
     orderedHand.sort(key = int) # List of numbers in quotations, key allows us to sort them as ints without disturbing the list
     return orderedHand
-    # HERE: the 1 liner keeps the suit, the original strips the suit and returns just the numbers
 
 # Orders the hand by rank, keeps the suits
 def orderRank(hand: list) -> list:
-    # The following line is a way to do it without touching the suits
+    # Way to do it without touching the suits:
     #hand.sort(key=lambda card: int(card[:-1]))
 
     # It can be done in one line with the sorted() function and a lambda function / anonymous function
@@ -310,139 +288,164 @@ def stringToTuple2(hand: list) -> list:
 def aceCheck(hand: list) -> bool:
     return any(ace[:-1] == "1" for ace in hand)
 
-def evalHand(hand: list):
+def evalHand(hand: list) -> tuple:
     scoredCards = [None] * 12
     print()
     print(hand)
+    if debugMode: print("evalHand Function")
     if(flush(hand)):
-        print("found flush")
+        if debugMode: print("found flush")
         hasHand["hasFlush"] = True
     if(straight(hand)):
-        print("found straight")
+        if debugMode: print("found straight")
         hasHand["hasStraight"] = True
     if(fiveOfAKind(hand)):
-        print("found 5 of a kind")
-        hasHand["hasFiveOfAKind"] = True
-        hasHand["hasFourOfAKind"] = True
-        hasHand["hasThreeOfAKind"] = True
-        hasHand["hasPair"] = True
-    if(fourOfAKind(hand)[0]):
+        if debugMode: print("found 5 of a kind")
+        hasHand["hasFiveOfAKind"], hasHand["hasFourOfAKind"], 
+        hasHand["hasThreeOfAKind"], hasHand["hasPair"] = True, True, True, True
+    if not hasHand["hasFourOfAKind"] and (fourOfAKind(hand)[0]):
         scoredCards[7] = fourOfAKind(hand)[1]
-        print("found 4 of a kind")
-        hasHand["hasFourOfAKind"] = True
-        hasHand["hasThreeOfAKind"] = True
-        hasHand["hasPair"] = True
+        if debugMode: print("found 4 of a kind")
+        hasHand["hasFourOfAKind"], hasHand["hasThreeOfAKind"], 
+        hasHand["hasPair"] = True, True, True
     if(threeOfAKind(hand)[0]):
         scoredCards[3] = threeOfAKind(hand)[1]
-        print("found 3 of a kind")
-        hasHand["hasThreeOfAKind"] = True
-        hasHand["hasPair"] = True
+        if debugMode: print("found 3 of a kind")
+        hasHand["hasThreeOfAKind"], hasHand["hasPair"] = True, True
         if(fullHouse(hand)[0]):
-            scoredCards[6] = fullHouse(hand)[1]
-            print("found FullHouse")
+            scoredCards[6] = fullHouse(hand)[1] # Might not be necessary
+            if debugMode: print("found FullHouse")
             hasHand["hasFullHouse"] = True
-
     if(pair(hand)[0]):
         scoredCards[1] = pair(hand)[1]
-        print("found pair")
+        if debugMode: print("found pair")
         hasHand["hasPair"] = True
         if(twoPair(hand)[0]):
             scoredCards[2] = twoPair(hand)[1]
-            print("found two pair")
+            if debugMode: print("found two pair")
             hasHand["hasTwoPair"] = True
 
-# combo hands
-
+    # 5 card combo hands
     if(hasHand["hasFlush"] and hasHand["hasFiveOfAKind"]):
-        print("found flush five")
-        return True, scoredCards
+        if debugMode: print("found flush five")
+        hasHand["hasFlushFive"] = True
     
     if(hasHand["hasFlush"] and hasHand["hasFullHouse"]):
-        print("found flush house")
-        return True, scoredCards
+        if debugMode: print("found flush house")
+        hasHand["hasFlushHouse"] = True
     
-    if(hasHand["hasFiveOfAKind"]):
+    """ if(hasHand["hasFiveOfAKind"]):
         print("found FiveOfAKind")
-        return True, scoredCards
+        hasHand["hasFiveOfAKind"] = True """
     
     if(hasHand["hasFlush"] and hasHand["hasStraight"]):
-        print("found straight flush")
-        return True, scoredCards
+        if debugMode: print("found straight flush")
+        hasHand["hasStraightFlush"] = True
     
+
     if(hasHand["hasFlush"] or hasHand["hasStraight"] or hasHand["hasFullHouse"] or hasHand["hasTwoPair"] or
         hasHand["hasFourOfAKind"] or hasHand["hasThreeOfAKind"] or hasHand["hasPair"]):
-        return True, scoredCards
-    
-    return False, scoredCards
-
-def scoreHand(hand, scoredCards = None):
-    # to do
-    if not scoredCards: # Score all indices
-        print("score all")
-    else: # Only score certain indices
-        print("score some")
-
-# Evaluate the following hand:
-testHands = [["5D", "6H", "9S", "7C", "8C"], ["5D", "6H", "9S", "8C", "8C"], ['11D', '7D', '6D', '10D', '6H'], ['2H', '3D', '5D', '6D', '7D'], ["8H", "3H", "9H", "7H", "11H"], ["5C", "6C", "9C", "7C", "8C"], ["13D", "6H", "9S", "7C", "8C", "11H", "5D", "6H", "1S", "7C", "12C", "11C"], ["1D", "11H", "12S", "13C", "10C"], ["1H", "1D", "1C", "1D", "1S"], ["1D", "1D", "1D", "1D", "1D"], ["5C", "6C", "9C", "7C", "8C"], ["10H", "10D", "10C", "1D", "10S"], ["1H", "1D", "1C", "1S"], ["10H", "1D", "1C", "10S", "10S"], ["10H", "11D", "1C", "7S", "10S"], ["10H", "11D", "11C", "7S", "10S"], ["2H", "1D", "2C", "10S", "1S"], ["1H", "2S", "2D", "1S", "2H"]]
-testHandNames = ["ihStraight", "ihStraightFake", "ihStraight3", "ihStraight4", "ihFlush", "ihStraightFlush", "ihSuitRanking", "ihAceStraight", "ihFiveOfAKind", "ihFlushFive", "ihStraightFlush", "ihFourOfAKind", "ihFourOfAKind2", "ihThree", "ihPair", "ihTwoPair", "ihTwoPair2", "ihFullHouse"]
-
-if 0:
-    for i in range(len(testHandNames)):
-        hasHand = {
-            "hasPair": False,
-            "hasTwoPair": False,
-            "hasThreeOfAKind": False,
-            "hasFullHouse": False,
-            "hasFourOfAKind": False,
-            "hasFiveOfAKind": False,
-            "hasStraight": False,
-            "hasFlush": False
-            }
-        print(testHandNames[i], i)
-        evalHand(testHands[i])
-        print("--------------------", i)
-
-count = 0
-# Test random hands until find a poker hand
-if 0:
-    while evalHand(generateHand()[0]) == False:
-        count += 1;
-        print(count)
+        #return True, scoredCards
         pass
 
-score = 0
-handAndDeck = generateHand(DEFAULT_HAND_SIZE)
-hand, deck = orderRank(handAndDeck[0]), handAndDeck[1]
-scoredCards = None
 
-playedHand = []
-print("In the crib playing balala")
-print("Enter P followed by indices to play the hand. D for discard. E.g. p 023")
-while not playedHand:
-    print("Rank Order:")
-    [print(f"{i}. {v}") for i, v in enumerate(hand)]
-    print()
-    print("Suit Order:", orderSuit(hand), len(deck))
-    userInput = input().split()
-    
-    if (userInput[0].lower() == 'd'):
-        # to do
-        # unlimited discards atm to do
-        discards = {int(x) for x in userInput[1]}
-        hand = [j for i, j in enumerate(hand) if i not in discards]
-        hand, deck = discardDraw(hand, deck, DEFAULT_HAND_SIZE)
+# Returns True if any Poker Hands are found, returns None for High Card
+    return any(handType == True for handType in hasHand.values()), scoredCards 
 
-    elif (userInput[0].lower() == 'p'):
-        # to do
-        # unlimited played cards atm to do
-        indices = [int(x) for x in userInput[1]]
-        for i in range(len(hand)):
-            if i in indices:
-                playedHand.append(hand[i])
-        print("You played:", playedHand)
-        temp, scoredCards = evalHand(playedHand)
-        scoreHand(playedHand, scoredCards)
-        
+def scoreHand(hand, scoredCards = None):
+    cardChips = 0
+    print(scoredCards)
+    newHand = None
+    highestHandType = None
+# Find first true value in the dict
+    for k, v in hasHand.items():
+        if v == True: 
+            highestHandType = k
+            break
+    print("Score the following:", highestHandType)
+
+    partialHands = {"hasFourOfAKind":7, "hasThreeOfAKind":3, "hasPair":1, "hasTwoPair":2}
+
+    if highestHandType in partialHands.keys():
+    # Feed the correct scoredCards index here and score the respective hand indices 
+        indices = scoredCards[partialHands[highestHandType]]
+        newHand = [card for i, card in enumerate(hand) if i in indices]
+        if debugMode:
+            print("scoreHand Function", highestHandType)
+            print(scoredCards[partialHands[highestHandType]])
+            print(indices)
+            print(newHand)
+
+    hand = hand if newHand == None else newHand
+
+    for card in hand:
+        rank = int(card[:-1])
+        print("rank",rank, end=" ")
+        match rank:
+            case 1:
+                chips = 11
+            case 11 | 12 | 13:
+                chips = 10
+            case _:
+                chips = rank
+        cardChips += chips
+    print("total", cardChips)
+
+    if highestHandType == None:
+        highHandInd = 0
     else:
-        print("Game Over---------------------")
-        break
+        highHandInd = findHIndex(highestHandType)
+    
+    # Multiply by (chipMultTable[highHandInd][4] - 1) is for hand lvl scaling
+    totalChip = cardChips + (chipMultTable[highHandInd][0] + chipMultTable[highHandInd][2] * (chipMultTable[highHandInd][4] - 1))
+    totalMult = chipMultTable[highHandInd][1] + chipMultTable[highHandInd][3] * (chipMultTable[highHandInd][4] - 1)
+    print("Total Chips:", totalChip, "Total Mult:", totalMult)
+    calculateScore = totalChip * totalMult
+    print("You scored:", calculateScore)
+
+def findHIndex(handName): # Finds the index of the input hand name
+    for i, j in enumerate(hasHand):
+        if j == handName:
+            return i
+    return None
+
+def main():
+    score = 0
+    handAndDeck = generateHand(DEFAULT_HAND_SIZE)
+    hand, deck = orderRank(handAndDeck[0]), handAndDeck[1]
+    scoredCards = None
+
+    playedHand = []
+    #print("In the crib playing balala")
+    print("Enter P followed by indices to play the hand. D for discard. E.g. p 023")
+    while not playedHand:
+        print("Rank Order:")
+        [print(f"{i}. {v}") for i, v in enumerate(hand)]
+        print()
+        print("Suit Order:", orderSuit(hand), len(deck))
+        userInput = input().split()
+
+    # Discard
+        if (userInput[0].lower() == 'd'):
+            discards = {int(x) for x in userInput[1]}
+            # to do unlimited discards atm
+            hand = [j for i, j in enumerate(hand) if i not in discards] # Removes cards from the hand based on indices
+            hand, deck = discardDraw(hand, deck, DEFAULT_HAND_SIZE)
+            print(deck)
+    # Play
+        elif (userInput[0].lower() == 'p'):
+            indices = {int(x) for x in userInput[1]}
+            # to do unlimited played cards atm
+            for i in range(len(hand)):
+                if i in indices:
+                    playedHand.append(hand[i])
+            print("You played:", playedHand)
+            temp, scoredCards = evalHand(playedHand)
+            scoreHand(playedHand, scoredCards)
+
+        else:
+            print("Game Over---------------------")
+            break
+
+if __name__ == "__main__":
+    main()
