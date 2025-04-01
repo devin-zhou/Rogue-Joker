@@ -1,5 +1,6 @@
 import random
 import copy
+import random
 
 baseCards1 = [
         "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
@@ -41,12 +42,22 @@ chipMultTable = [
 
 # blue chip, red mult, this * handLVL for chip scale, this * hand level for mult scale, handLVL
 
+allJokers = {
+    "Joker": ["+4 Mult", 0, 4, 1, "common", 2, 1, 0],
+    "Misprint": ["+0-23 Mult", 0, random.randrange(0, 24), 1, "common", 4, 2, 0]
+}
+
+# desc, + Chips, + Mult, X Mult, rarity, cost, sell_cost, counter
+
+# sell_cost = math.max(1, math.floor(cost/2))
+
 debugMode = 0
 
 DEFAULT_HAND_SIZE = 8
 DEFAULT_JOKER_SLOTS = 5
 DEFAULT_DECK_SIZE = 52
 
+jokers = []
 
 # parallel list vs dict
 hasPokerHand = [False,False,False,
@@ -301,17 +312,15 @@ def evalHand(hand: list) -> tuple:
         hasHand["hasStraight"] = True
     if(fiveOfAKind(hand)):
         if debugMode: print("found 5 of a kind")
-        hasHand["hasFiveOfAKind"], hasHand["hasFourOfAKind"], 
-        hasHand["hasThreeOfAKind"], hasHand["hasPair"] = True, True, True, True
+        hasHand["hasFiveOfAKind"] = hasHand["hasFourOfAKind"] = hasHand["hasThreeOfAKind"] = hasHand["hasPair"] = True
     if not hasHand["hasFourOfAKind"] and (fourOfAKind(hand)[0]):
         scoredCards[7] = fourOfAKind(hand)[1]
         if debugMode: print("found 4 of a kind")
-        hasHand["hasFourOfAKind"], hasHand["hasThreeOfAKind"], 
-        hasHand["hasPair"] = True, True, True
+        hasHand["hasFourOfAKind"] = hasHand["hasThreeOfAKind"] = hasHand["hasPair"] = True
     if(threeOfAKind(hand)[0]):
         scoredCards[3] = threeOfAKind(hand)[1]
         if debugMode: print("found 3 of a kind")
-        hasHand["hasThreeOfAKind"], hasHand["hasPair"] = True, True
+        hasHand["hasThreeOfAKind"] = hasHand["hasPair"] = True
         if(fullHouse(hand)[0]):
             scoredCards[6] = fullHouse(hand)[1] # Might not be necessary
             if debugMode: print("found FullHouse")
@@ -352,9 +361,9 @@ def evalHand(hand: list) -> tuple:
 # Returns True if any Poker Hands are found, returns None for High Card
     return any(handType == True for handType in hasHand.values()), scoredCards 
 
-def scoreHand(hand, scoredCards = None):
-    cardChips = 0
+def scoreHand(hand, scoredCards = None) -> int:
     print(scoredCards)
+    cardChips = 0
     newHand = None
     highestHandType = None
 # Find first true value in the dict
@@ -402,6 +411,7 @@ def scoreHand(hand, scoredCards = None):
     print("Total Chips:", totalChip, "Total Mult:", totalMult)
     calculateScore = totalChip * totalMult
     print("You scored:", calculateScore)
+    return calculateScore
 
 def findHIndex(handName): # Finds the index of the input hand name
     for i, j in enumerate(hasHand):
@@ -409,12 +419,21 @@ def findHIndex(handName): # Finds the index of the input hand name
             return i
     return None
 
+def printJokers():
+    print("j")
+
 def main():
     score = 0
     handAndDeck = generateHand(DEFAULT_HAND_SIZE)
     hand, deck = orderRank(handAndDeck[0]), handAndDeck[1]
     scoredCards = None
 
+    while not jokers:
+        print("Select a Joker by index")
+        printJokers()
+        jokers.append(input()) 
+    print(jokers)
+        
     playedHand = []
     #print("In the crib playing balala")
     print("Enter P followed by indices to play the hand. D for discard. E.g. p 023")
@@ -423,25 +442,28 @@ def main():
         [print(f"{i}. {v}") for i, v in enumerate(hand)]
         print()
         print("Suit Order:", orderSuit(hand), len(deck))
-        userInput = input().split()
+        userInput = input()
+        userInputAction = userInput[0].lower()
+        userInputCardIndex = userInput[1:].strip()
 
     # Discard
-        if (userInput[0].lower() == 'd'):
-            discards = {int(x) for x in userInput[1]}
+        if (userInputAction == 'd'):
+            discards = {int(x) for x in userInputCardIndex}
             # to do unlimited discards atm
             hand = [j for i, j in enumerate(hand) if i not in discards] # Removes cards from the hand based on indices
             hand, deck = discardDraw(hand, deck, DEFAULT_HAND_SIZE)
-            print(deck)
+            print(deck) # TEMP todo debug line
     # Play
-        elif (userInput[0].lower() == 'p'):
-            indices = {int(x) for x in userInput[1]}
+        elif (userInputAction == 'p'):
+            indices = {int(x) for x in userInputCardIndex}
             # to do unlimited played cards atm
             for i in range(len(hand)):
                 if i in indices:
                     playedHand.append(hand[i])
             print("You played:", playedHand)
             temp, scoredCards = evalHand(playedHand)
-            scoreHand(playedHand, scoredCards)
+            score += scoreHand(playedHand, scoredCards)
+            print("Subtotal score", score)
 
         else:
             print("Game Over---------------------")
