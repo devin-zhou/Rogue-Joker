@@ -17,6 +17,7 @@ baseCards = [
 	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
     ];
 
+#dont actually need to initialize this since baseCards will be copied into deck
 deck = [
         "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
 		"1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
@@ -46,8 +47,7 @@ allJokers = {
     "Joker": ["+4 Mult", 0, 4, 1, "common", 2, 1, 0],
     "Misprint": ["+0-23 Mult", 0, random.randrange(0, 24), 1, "common", 4, 2, 0]
 }
-
-# desc, + Chips, + Mult, X Mult, rarity, cost, sell_cost, counter
+# name, desc, + Chips, + Mult, X Mult, rarity, cost, sell_cost, counter (scaling)
 
 # sell_cost = math.max(1, math.floor(cost/2))
 
@@ -57,7 +57,7 @@ DEFAULT_HAND_SIZE = 8
 DEFAULT_JOKER_SLOTS = 5
 DEFAULT_DECK_SIZE = 52
 
-jokers = []
+currentJokers = []
 
 # parallel list vs dict
 hasPokerHand = [False,False,False,
@@ -358,11 +358,11 @@ def evalHand(hand: list) -> tuple:
         pass
 
 
-# Returns True if any Poker Hands are found, returns None for High Card
+    # Returns True if any Poker Hands are found, returns False for High Card
     return any(handType == True for handType in hasHand.values()), scoredCards 
 
 def scoreHand(hand, scoredCards = None) -> int:
-    print(scoredCards)
+    print("scoredCards", scoredCards)
     cardChips = 0
     newHand = None
     highestHandType = None
@@ -419,8 +419,13 @@ def findHIndex(handName): # Finds the index of the input hand name
             return i
     return None
 
-def printJokers():
-    print("j")
+def jokerSelection():
+    while not currentJokers:
+        print("Select a Joker by index")
+        # Traverse and print joker dict with indices for input selection
+        [print(f'{index}. {key}:\t{value[0]}') for index, (key, value) in enumerate(allJokers.items())]
+        currentJokers.append(input()) 
+    print("jokers:", currentJokers)
 
 def main():
     score = 0
@@ -428,11 +433,7 @@ def main():
     hand, deck = orderRank(handAndDeck[0]), handAndDeck[1]
     scoredCards = None
 
-    while not jokers:
-        print("Select a Joker by index")
-        printJokers()
-        jokers.append(input()) 
-    print(jokers)
+    jokerSelection()
         
     playedHand = []
     #print("In the crib playing balala")
@@ -461,8 +462,13 @@ def main():
                 if i in indices:
                     playedHand.append(hand[i])
             print("You played:", playedHand)
-            temp, scoredCards = evalHand(playedHand)
-            score += scoreHand(playedHand, scoredCards)
+            notHighCard, scoredCards = evalHand(playedHand) #notHighCard lets us know if it's a multi card hand thats being scored
+
+            if notHighCard: # multi card poker hand
+                score += scoreHand(playedHand, scoredCards)
+            else: # high card
+                pass
+            # evaluate jokers here
             print("Subtotal score", score)
 
         else:
