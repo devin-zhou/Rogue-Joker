@@ -305,6 +305,7 @@ def stringToTuple2(hand: list) -> list: # UNUSED
     return [(int(card[:-1]), card[-1]) for card in hand]
 
 
+
 def aceCheck(hand: list) -> bool:
     return any(ace[:-1] == "1" for ace in hand)
 
@@ -354,34 +355,43 @@ def evalHand(hand: list) -> tuple:
 
 def scoreHand(hand, scoredCards = None) -> int:
     if debugMode: print("scoredCards", scoredCards)
-    cardChips = 0
     newHand = None
-    highestHandType = None
+    highestHandName = None
 # Find first true value in the dict
     for k, v in hasHand.items():
         if v == True: 
-            highestHandType = k
+            highestHandName = k
             break
-    print("Score the following:", highestHandType)
+    print("Score the following:", highestHandName)
 
     partialHands = {"hasFourOfAKind":7, "hasThreeOfAKind":3, "hasPair":1, "hasTwoPair":2}
 
 # Check if the hand we're scoring is a partial hand or not
-    if highestHandType in partialHands.keys():
+    if highestHandName in partialHands.keys():
     # Feed the correct scoredCards index here and score the respective hand indices 
-        indices = scoredCards[partialHands[highestHandType]]
+        indices = scoredCards[partialHands[highestHandName]]
         newHand = [card for i, card in enumerate(hand) if i in indices]
         if debugMode:
-            print("scoreHand: Function", highestHandType)
-            print(scoredCards[partialHands[highestHandType]])
+            print("scoreHand: Function", highestHandName)
+            print(scoredCards[partialHands[highestHandName]])
             print(indices)
             print(newHand)
 
     hand = hand if newHand == None else newHand
 
+    # If highestHandName is None, set highestHandIndex to zero (high hand), else 
+    highestHandIndex = 0 if highestHandName == None else findHIndex(highestHandName)
+    totalChip, totalMult = calculateChipMult(countChip(hand, highestHandIndex), highestHandIndex)
+
+    print(Style.BRIGHT + Fore.BLUE + "Total Chips:", totalChip, Fore.RED + "Total Mult:", totalMult, Style.RESET_ALL)
+    return totalChip * totalMult
+
+def countChip(hand, handIndex):
+    #handIndex argument for high hand decision
+    total = 0
     for card in hand:
         rank = int(card[:-1])
-        print("rank", rank, end=" ")
+        if debugMode: print("rank", rank, end=" ")
         match rank: #to do functionize this for high card?
             case 1:
                 chips = 11
@@ -389,22 +399,17 @@ def scoreHand(hand, scoredCards = None) -> int:
                 chips = 10
             case _:
                 chips = rank
-        cardChips += chips
-    print(", total", cardChips)
+        total += chips
+    if debugMode: print(", total", total)
+    return total
+        
 
-    if highestHandType == None:
-        highHandInd = 0
-    else:
-        highHandInd = findHIndex(highestHandType)
-    
-    # to do functionize the calcs
-    # Multiply by (chipMultTable[highHandInd][4] - 1) is for hand lvl scaling
-    totalChip = cardChips + (chipMultTable[highHandInd][0] + chipMultTable[highHandInd][2] * (chipMultTable[highHandInd][4] - 1))
-    totalMult = chipMultTable[highHandInd][1] + chipMultTable[highHandInd][3] * (chipMultTable[highHandInd][4] - 1)
-    calculateScore = totalChip * totalMult
-    print("Total Chips:", totalChip, "Total Mult:", totalMult) #to do color, blue and red
-    print("You scored:", calculateScore)
-    return calculateScore
+def calculateChipMult(cardChips, handIndex):
+    # Multiply by (chipMultTable[highestHandIndex][4] - 1) is for hand lvl scaling
+    chip = cardChips + (chipMultTable[handIndex][0] + chipMultTable[handIndex][2] * (chipMultTable[handIndex][4] - 1))
+    mult = chipMultTable[handIndex][1] + chipMultTable[handIndex][3] * (chipMultTable[handIndex][4] - 1)
+    return chip, mult
+
 
 def jokerSelection():
     while not currentJokers:
@@ -424,15 +429,15 @@ def printHand(hand):
 def colorCard(card):
     match card[-1]:
         case "H":
-            print(Fore.RED + card, end=" ")
+            print(Style.BRIGHT + Fore.RED + card, end=" ")
         case "D":
-            print(Fore.YELLOW + card, end=" ")
+            print(Style.BRIGHT + Fore.YELLOW + card, end=" ")
         case "S":
-            print(Fore.BLUE + card, end=" ")
+            print(Style.BRIGHT + Fore.BLUE + card, end=" ")
         case "C":
-            print(Fore.GREEN + card, end=" ")
-        case _: # wildcard modfier?
-            print(card)
+            print(Style.BRIGHT + Fore.GREEN + card, end=" ")
+        case _: # wildcard modifier?
+            print(Style.BRIGHT + Fore.MAGENTA + card, end=" ")
     print(Style.RESET_ALL, end="")
     
 
@@ -479,8 +484,13 @@ def main():
                 score += scoreHand(playedHand, scoredCards)
             else: # to do: high card
                 pass
+            print("Subtotal score:", Style.BRIGHT + str(score), Style.RESET_ALL)
             # evaluate jokers here
-            print("Subtotal score", score)
+            print("implement jokers here")
+            print("Total score", Style.BRIGHT + Fore.CYAN + str(score), Style.RESET_ALL)
+
+            
+
 
             #to do: check if the blind is defeated
             #to do: next hand / round logic 
