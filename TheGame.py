@@ -5,31 +5,6 @@ import time
 import os
 
 from colorama import Fore, Back, Style
-import rich
-
-
-baseCards1 = [
-        "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
-		"1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
-		"1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
-	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
-    ];
-
-# altered with a lot of 1s for testing
-baseCards = [
-        "1C", "1C", "1C", "1C", "1C", "1C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
-		"1D", "2D", "3D", "1D", "1D", "1D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
-		"1H", "2H", "1H", "1H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
-	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
-    ];
-
-checkeredDeck = [
-        "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 0 - 13
-		"1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S", # 14 - 26
-		"1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
-	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
-    ];
-
 
 chipMultTable = [
   [160, 16, 50, 3, 1], # flush five
@@ -50,48 +25,31 @@ chipMultTable = [
 
 allJokers = {
     "Joker": ["+4 Mult", 0, 4, 1, "common", 2, 1, 0],
-    "Misprint": ["+0-23 Mult", 0, random.randrange(0, 24), 1, "common", 4, 2, 0] # misprint randomizes only radomizes once
+    "Misprint": ["+0-23 Mult", 0, 0, 1, "common", 4, 2, 0]
 }
 # name, desc, + Chips, + Mult, X Mult, rarity, cost, sell_cost, counter (scaling)
 
 # sell_cost = math.max(1, math.floor(cost/2))
 
-allDecks = {}
-
-'''
-Red Deck: +1 discard every round
-
-Blue Deck: + 1 hand every round
-
-Yellow Deck: Start with extra $10
-
-Abandoned Deck: Start with no Face Cards in your deck
-
-checkered deck: only hearts and spade
-'''
+allDecks = {
+    "Red Deck": "+1 discard every round",
+    "Blue Deck": "+1 hand every round",
+    "Yellow Deck": "Start with an extra $10",
+    "Abandoned Deck": "No face cards in your deck",
+    "Checkered Deck": "Only hearts and spades",
+}
 
 
 debugMode = 0
 
 fastMode = False
-speedSmall = 0.1
-speedMed = 0.5
+speed1 = 0.05
+speed2 = 0.1
+speed3 = 0.5
 
 if fastMode:
-    speedSmall, speedMed = 0, 0
+    speed1, speed2, speed3 = 0, 0, 0
 
-handSize = 8
-DEFAULT_JOKER_SLOTS = 5
-DEFAULT_DECK_SIZE = 52
-
-currentJokers = []
-selectedDeck = []
-
-dollars = 0
-numHands = 4
-numDiscards = 3
-
-level = 1
 
 
 hasHand = {
@@ -139,7 +97,7 @@ class card:
 
 
 
-def generateHand(handSize) -> tuple:
+def generateHand(handSize, baseCards) -> tuple:
     deck = copy.deepcopy(baseCards)
     random.shuffle(deck)
     return deck[0:handSize], deck[handSize:]
@@ -339,7 +297,7 @@ def stringToTuple2(hand: list) -> list: # UNUSED
 def aceCheck(hand: list) -> bool:
     return any(ace[:-1] == "1" for ace in hand)
 
-def findHIndex(handName): # Finds the index of the input hand name
+def findHighIndex(handName): # Finds the index of the input hand name
     for i, j in enumerate(hasHand):
         if j == handName:
             return i
@@ -380,26 +338,28 @@ def evalHand(hand: list) -> tuple:
     return any(handType == True for handType in hasHand.values()), scoredCards 
 
 
-def scoreHand(hand, scoredCards = None) -> int:
+def scoreHand(hand, scoredCards = None) -> tuple:
     if debugMode: print("scoredCards", scoredCards)
     newHand = None
     highestHandName = None
-# Find first true value in the dict
+    # Find first true value in the dict
     for k, v in hasHand.items():
         if v:
             highestHandName = k
             break
+
     print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + highestHandName[3:].upper() + Style.RESET_ALL)
+        
 
     partialHands = {"hasFourOfAKind":7, "hasThreeOfAKind":3, "hasPair":1, "hasTwoPair":2}
 
-# Check if the hand we're scoring is a partial hand or not
+    # Check if the hand we're scoring is a partial hand or not
     if highestHandName in partialHands.keys():
-    # Feed the correct scoredCards index here and score the respective hand indices 
+        # Feed the correct scoredCards index and score the respective hand indices 
         indices = scoredCards[partialHands[highestHandName]]
         newHand = [card for i, card in enumerate(hand) if i in indices]
         if debugMode:
-            print("scoreHand: Function", highestHandName)
+            print("scoreHandFunction", highestHandName)
             print(scoredCards[partialHands[highestHandName]])
             print(indices)
             print(newHand)
@@ -407,17 +367,22 @@ def scoreHand(hand, scoredCards = None) -> int:
     hand = hand if newHand == None else newHand
 
     # If highestHandName is None, set highestHandIndex to zero (high hand), else 
-    highestHandIndex = 0 if highestHandName == None else findHIndex(highestHandName)
+    highestHandIndex = 0 if highestHandName == None else findHighIndex(highestHandName)
 
     return calculateChipMult(countChips(hand, highestHandIndex), highestHandIndex)
 
 def countChips(hand, handIndex):
+    total = 0
+    
     # High Hand
     if not handIndex: 
         #handIndex argument for high hand decision
-        pass
+        orderedHand = orderRank(hand)
+        if orderedHand[0][0] == "1":
+            hand = [orderedHand[0]]
+        else:
+            hand = [orderedHand[-1]]
     
-    total = 0
     for card in hand:
         rank = int(card[:-1])
         if debugMode: print("rank", rank, end=" ")
@@ -440,8 +405,8 @@ def calculateChipMult(cardChips, handIndex):
     return chip, mult
 
 
-def jokerSelection():
-    while not currentJokers:
+def jokerSelection(currentJokers):
+    while currentJokers == []:
         print("Select a Joker by index")
         printJokers()
         currentJokers.append(int(input()))
@@ -452,19 +417,18 @@ def printJokers():
     #[print(f'{index}. {key}:\t{value[0]}') for index, (key, value) in enumerate(allJokers.items())]
     for index, (key, value) in enumerate(allJokers.items()):
         print(f'{index}. {key}:\t{value[0]}')
-        time.sleep(speedMed)
+        time.sleep(speed2)
 
-def deckSelection():
-    while not selectedDeck:
+def deckSelection(selectedDeck):
+    while selectedDeck == None:
         print("Select a deck by index")
-        #printDecks()
-        print("print deck options here")
-        selectedDeck.append(int(input()))
+        printDecks()
+        selectedDeck = int(input())
 
 def printDecks():
     for index, (key, value) in enumerate(allDecks.items()):
-        print(f'{index}. {key}:\t{value[0]}')
-        time.sleep(speedMed)
+        print(f'{index}. {key}:\t{value}') #to do: spruce this up
+        time.sleep(speed2)
 
 def printHand(hand):
     #[print(f"{i}. {colorCard(v)}") for i, v in enumerate(hand)]
@@ -472,7 +436,7 @@ def printHand(hand):
         print(f"{i}.", end="")
         colorCard(v)
         print()
-        time.sleep(speedSmall)
+        time.sleep(speed2)
 
 def colorCard(card):
     match card[-1]:
@@ -498,7 +462,7 @@ def clear_console():
 
 def slowWordPrint(word, type):
     for char in str(word):
-        time.sleep(speedSmall)
+        time.sleep(speed1)
         if type == "chip":
             print(Fore.BLUE + Style.BRIGHT + char + Style.RESET_ALL, end="", flush=True)
         elif type == "mult":
@@ -508,44 +472,91 @@ def slowWordPrint(word, type):
     print(end=" ")
 
 def endJokerCalculation(chip, mult, XMult):
-    testJokers = [0,1,2,3]
-    time.sleep(speedMed)
+    testJokers = [0,1,2,3] #to do: remove
+    time.sleep(speed3)
     #for jokers in currentJokers:
     for jokers in testJokers:
         match jokers:
             case 0:
                 mult += 4
                 slowWordPrint("Joker: +4", "mult")
-                
             case 1:
-                mult += 3
-                slowWordPrint("Misprint: +3", "mult")
+                misprintMult = random.randint(0, 24)
+                mult += misprintMult
+                slowWordPrint("Misprint: +" + str(misprintMult), "mult")
             case 2:
                 XMult += 2
                 slowWordPrint("Super Joker: x2", "XMult")
             case 3:
                 chip += 250
-                slowWordPrint("Stuntman: +250", "chip")
-                        
+                slowWordPrint("Stuntman: +250", "chip")                    
             case _:
                 pass
     return chip, mult, XMult
 
 def endOfTurnPrint(chip, mult, XMult):
-    time.sleep(speedMed)
+    time.sleep(speed2)
     print(Fore.BLUE + "\n\nTotal Chips:" + Style.RESET_ALL)
     slowWordPrint(chip, "chip")
-    time.sleep(speedMed)
+
+    time.sleep(speed3)
     print(Fore.RED + "\nTotal Mult:" + Style.RESET_ALL)
     slowWordPrint(mult, "mult")
-    time.sleep(speedMed)
+    
+    time.sleep(speed3)
     print(Fore.RED + Back.WHITE + "\nTotal XMult:" + Style.RESET_ALL)
     slowWordPrint(XMult, "XMult")
 
-    print("\nTotal score", Style.BRIGHT + Fore.CYAN, chip * (mult * XMult - 1), Style.RESET_ALL)
+    print("\nTotal score", Style.BRIGHT + Fore.CYAN, chip * (mult * XMult), Style.RESET_ALL)
 
 
 def main():
+    currentJokers = []
+    selectedDeck = None
+    handSize = 8
+    dollars = 0
+    numHands = 4
+    numDiscards = 3
+
+    level = 1
+    score = 0
+    chip = 0
+    mult = 0
+    XMult = 1
+    scoredCards = None
+    playedHand = []
+
+    baseCards1 = [
+        "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
+		"1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
+		"1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
+	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
+    ];
+
+    # altered with a lot of 1s for testing
+    baseCards = [
+            "1C", "1C", "1C", "1C", "1C", "1C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
+            "1D", "2D", "3D", "1D", "1D", "1D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
+            "1H", "2H", "1H", "1H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
+            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
+        ];
+
+    checkeredDeck = [
+            "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 0 - 13
+            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S", # 14 - 26
+            "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
+            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
+        ];
+
+    abandonedDeck = [
+            "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C",
+            "1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D",
+            "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H",
+            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S"
+        ];
+
+
+
     clear_console()
     print("""\
  ____                              _       _             
@@ -555,33 +566,42 @@ def main():
 |_| \_\___/ \__, |\__,_|\___|  \___/ \___/|_|\_\___|_|   
             |___/                                        
                     """)
-    time.sleep(speedMed)
-    score = 0
-    XMult = 1
-
-    handAndDeck = generateHand(handSize)
-    hand, deck = orderRank(handAndDeck[0]), handAndDeck[1]
-    scoredCards = None
-
+    
+    time.sleep(speed3)
+    
     # deck selection here
-    #deckSelection()
+    deckSelection(selectedDeck)
 
-    jokerSelection()
+# apply new deck
+    match selectedDeck:
+        case 0:
+            numDiscards += 1
+        case 1:
+            numHands += 1
+        case 2:
+            dollars += 10
+        case 3:
+            baseCards = abandonedDeck
+        case 4:
+            baseCards = checkeredDeck
+        case _:
+            pass
+
+    jokerSelection(currentJokers)
 
 # apply jokers that affect deck
     for jokers in currentJokers:
         match int(jokers):
             case 2:
-                # checkered deck: only hearts and spade
-                global baseCards
-                baseCards = checkeredDeck
-                print("checkered")
+                pass
             case _:
                 pass
-        
-    playedHand = []
+
+    handWithDeck = generateHand(handSize, baseCards)
+    hand, deck = orderRank(handWithDeck[0]), handWithDeck[1]
+
     print("\nEnter " + Back.RED + Fore.WHITE + Style.BRIGHT + "P" + Style.RESET_ALL + " followed by indices to play the hand. " + Back.BLUE + Style.BRIGHT + "D" + Style.RESET_ALL + " for discard. E.g. p 023")
-    time.sleep(speedMed)
+    time.sleep(speed3)
     while not playedHand:
         printHand(hand)
         #[print(f"{i}. {v}") for i, v in enumerate(hand)]
@@ -611,13 +631,18 @@ def main():
             if notHighCard: # multi card poker hand
                 chip, mult = scoreHand(playedHand, scoredCards)
             else: # to do: high card
-                pass
-            print("Subtotal:" + Style.BRIGHT + Fore.BLUE, chip, Style.RESET_ALL + "*"
+                print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + "High Card" + Style.RESET_ALL)
+                chip, mult = calculateChipMult(countChips(playedHand, 0), 11)
+
+            print("\nSubtotal:" + Style.BRIGHT + Fore.BLUE, chip, Style.RESET_ALL + "*"
                   + Fore.RED, mult, Style.RESET_ALL + "=", (chip * mult))
+            
             print("JOKERS:")
             chip, mult, XMult = endJokerCalculation(chip, mult, XMult)
+            XMult = XMult if XMult == 1 else XMult - 1
+
             endOfTurnPrint(chip, mult, XMult)
-            score += chip * (mult * XMult - 1)
+            score += chip * (mult * XMult)
 
             #to do: check if the blind is defeated
             #to do: next hand / round logic 
