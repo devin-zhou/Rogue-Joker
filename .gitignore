@@ -1,6 +1,6 @@
 *.js
 tempCodeRunnerFile.py
 *.pyc
-*.txt
+*a.txt
 test_gui.py
 *test.py
