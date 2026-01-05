@@ -119,18 +119,18 @@ handRankings = {
     "flushFive": 11
 }
 
-class card:
-    def __init__(self): 
-        self.rank = 1
-        self.suit = "C"
+class Card:
+    def __init__(self, rank, suit): 
+        self.rank = rank
+        self.suit = suit
         self.mult = 0
-        match self.rank:
-            case 1:
-                self.chips = 11
-            case 11, 12, 13:
-                self.chips = 10
-            case _:
-                self.chips = self.rank
+
+    def chips(self):
+        if self.rank == 1:
+            return 11
+        elif self.rank in (11, 12, 13):
+            return 10
+        return self.rank
         #Enhancements: Bonus card, Mult Card, Wild Card, Glass Card, Steel Card, Stone Card, Gold Card, Lucky Card
 
         #Editions: Base, Foil (+50 chips), Holographic (+10 Mult), Polychrome (X1.5 Mult), Negative (+ 1 Joker Slot)
@@ -144,7 +144,7 @@ def generateHand(handSize, baseCards) -> tuple:
     random.shuffle(deck)
     return deck[0:handSize], deck[handSize:]
 
-def discardDraw(hand, deck, handSize) -> tuple:
+def drawCards(hand, deck, handSize) -> tuple:
     numNewCards = handSize - len(hand)
     return orderRank(hand + deck[0:numNewCards]), deck[numNewCards:]
 
@@ -165,10 +165,7 @@ def find_flush(hand: list, flushSize = 5) -> bool:
     return any(count >= flushSize for count in suitCount.values())
 
 def find_straight(hand: list, straightSize = 5) -> bool:
-    orderedHand = orderRankNumbers(hand)
-    # Joker: Four Fingers
-    # if global var has the joker? or make a parameter for it in this func?
-    #straightSize = 4
+    orderedHand = removeSuits(hand)
 
     # Ace Case
     # Might not work with Four Fingers
@@ -185,7 +182,7 @@ def find_straight(hand: list, straightSize = 5) -> bool:
     return len(orderedHand) == straightSize and sum(orderedHand) == orderedHand[0] * 5 + 10 and orderedHand[0] == orderedHand[-1] - 4
 
 def find_five_of_a_kind(hand: list) -> bool:
-    orderedHand = orderRankNumbers(hand)
+    orderedHand = removeSuits(hand)
     if debugMode:
         print("\nfind_five_of_a_kind Check")
         print("hand", orderedHand, len(orderedHand))
@@ -193,7 +190,7 @@ def find_five_of_a_kind(hand: list) -> bool:
     return all(orderedHand[0] == a for a in orderedHand) and len(orderedHand) == 5
 
 def find_four_of_a_kind(hand: list) -> tuple:
-    orderedHand = orderRankNumbers(hand)
+    orderedHand = removeSuits(hand)
 
     if debugMode:
         print("\nfind_four_of_a_kind Check")
@@ -205,54 +202,52 @@ def find_four_of_a_kind(hand: list) -> tuple:
             return True, [1, 2, 3, 4]
     return False, None
 
-def find_three_of_a_kind(hand: list, sorted = False) -> tuple:
-    orderedHand = orderRankNumbers(hand) if not sorted else hand
+# Returns FIRST 3oak found 
+def find_three_of_a_kind(hand: list) -> tuple:
+    orderedHand = removeSuits(hand)
+    lengthHand = len(orderedHand)
 
     if debugMode:
         print("\nfind_three_of_a_kind Check")
-        print("hand", orderedHand, len(orderedHand))
+        print("hand", orderedHand, lengthHand)
 
-    if len(orderedHand) >= 3 and orderedHand[0] == orderedHand[2]:
-            return True, [0, 1, 2]
-    if len(orderedHand) >= 4 and orderedHand[1] == orderedHand[3]:
-            return True, [1, 2, 3]
-    if len(orderedHand) >= 5 and orderedHand[2] == orderedHand[4]:
-        return True, [2, 3, 4]
+    for i in range(len(orderedHand) - 2):
+        if orderedHand[i] == orderedHand[i + 1] == orderedHand[i + 2]:
+            return True, [i, i + 1, i + 2]
     return False, None
 
-def find_pair(hand: list, sorted = False) -> tuple:
-    orderedHand = orderRankNumbers(hand) if not sorted else hand
+# Returns FIRST pair found 
+def find_pair(hand: list) -> tuple:
+    print(hand)
+    orderedHand = removeSuits(hand)
+    lengthHand = len(orderedHand)
 
     if debugMode:
         print("\nfind_pair Check")
-        print("hand", orderedHand, len(orderedHand))
+        print("hand", orderedHand, lengthHand)
+    
+    for i in range(lengthHand - 1):
+        if orderedHand[i] == orderedHand[i + 1]:
+            return True, [i, i + 1]
 
-    if len(orderedHand) >= 2 and orderedHand[0] == orderedHand[1]:
-            return True, [0, 1]
-    if len(orderedHand) >= 3 and orderedHand[1] == orderedHand[2]:
-            return True, [1, 2]
-    if len(orderedHand) >= 4 and orderedHand[2] == orderedHand[3]:
-            return True, [2, 3]
-    if len(orderedHand) >= 5 and orderedHand[3] == orderedHand[4]:
-        return True, [3, 4]
     return False, None
 
 def find_two_pair(hand: list) -> tuple:
-    orderedHand = orderRankNumbers(hand)
+    if len(hand) < 4:
+        return False, None
+
     hasSecondPair, pairIndex2 = None, None
 
-    hasFirstPair, pairIndex = find_pair(orderedHand, True)
+    hasFirstPair, pairIndex = find_pair(hand)
 
     if hasFirstPair:
-        orderedHand[pairIndex[0]] = "x"
-        orderedHand[pairIndex[1]] = "y"
-        # Following works but removes them from the list permanently
-        #del orderedHand[pairIndex[0]:pairIndex[1]+1]
-        hasSecondPair, pairIndex2 = find_pair(orderedHand, True)
+        hand[pairIndex[0]] = "x"
+        hand[pairIndex[1]] = "y"
+        hasSecondPair, pairIndex2 = find_pair(hand)
 
     if debugMode:
         print("\nfind_two_pair Check")
-        print("hand", orderedHand, len(orderedHand))
+        print("hand", hand, len(hand))
         print(hasFirstPair, pairIndex)
         print(hasSecondPair, pairIndex2)
 
@@ -261,22 +256,24 @@ def find_two_pair(hand: list) -> tuple:
     return False, None
 
 def find_full_house(hand: list) -> tuple:
-    orderedHand = orderRankNumbers(hand)
+    if len(hand) < 5:
+        return False, None
+
     hasPair, pairIndex = None, None
 
-    hasThree, threeIndex = find_three_of_a_kind(orderedHand, True)
+    hasThree, threeIndex = find_three_of_a_kind(hand)
 
     if hasThree:
-        orderedHand[threeIndex[0]] = "x"
-        orderedHand[threeIndex[1]] = "y"
-        orderedHand[threeIndex[2]] = "z"
+        hand[threeIndex[0]] = "x"
+        hand[threeIndex[1]] = "y"
+        hand[threeIndex[2]] = "z"
         # Following works but removes them from the list permanently
         #del orderedHand[pairIndex[0]:pairIndex[1]+1]
-        hasPair, pairIndex = find_pair(orderedHand, True)
+        hasPair, pairIndex = find_pair(hand)
 
     if debugMode:
         print("\nfind_full_house Check")
-        print("hand", orderedHand, len(orderedHand))
+        print("hand", hand, len(hand))
         print(hasPair, pairIndex)
 
     if hasThree and hasPair:
@@ -307,17 +304,8 @@ def removeSuits(hand):
     hand = [int(card[:-1]) for card in hand] # Removes the suit character at the end of each index
     return hand
 
-# Orders the hand by rank, removes the suits, making them int
-def orderRankNumbers(hand: list) -> list:
-    orderedHand = removeSuits(hand)
-    orderedHand.sort(key = int) # List of numbers in quotations, key allows us to sort them as ints without disturbing the list
-    return orderedHand
-
 # Orders the hand by rank, keeps the suits
 def orderRank(hand: list) -> list:
-    # Without touching the suits:
-    #hand.sort(key=lambda card: int(card[:-1]))
-
     # It can be done in one line with the sorted() function and a lambda function / anonymous function
     return sorted(hand, key=lambda card: int(card[:-1]))
 
@@ -325,7 +313,8 @@ def orderRank(hand: list) -> list:
 def aceCheck(hand: list) -> bool:
     return any(ace[:-1] == "1" for ace in hand)
 
-def findHighIndex(handName): # Finds the index of the input hand name
+# Finds the index of the input hand name from the hasHand dict
+def findHighIndex(handName): 
     for i, j in enumerate(hasHand):
         if j == handName:
             return i
@@ -333,22 +322,27 @@ def findHighIndex(handName): # Finds the index of the input hand name
 
 
 
-
+# Checks for multi-card hand types and stores the found hands in a dict, returns tuple (True/False if its highcard, list of lists with the indices of scored cards from partial hand types)
 def evalHand(hand: list, fourFingers: int) -> tuple:
-    scoredHands = [None] * 12
+    # Resets all poker hand flags to false
+    for key in hasHand:
+        hasHand[key] = False
+
+    # Stored hands types are low to high
+    partiaHandIndices = [None] * 12
     # Whole Hands
     hasHand["hasFlush"] = find_flush(hand, fourFingers)
     hasHand["hasStraight"] = find_straight(hand, fourFingers)
     hasHand["hasFiveOfAKind"] = find_five_of_a_kind(hand)
     
     # Partial Hands
-    hasHand["hasFourOfAKind"], scoredHands[7] = find_four_of_a_kind(hand)
-    hasHand["hasThreeOfAKind"], scoredHands[3] = find_three_of_a_kind(hand)
+    hasHand["hasFourOfAKind"], partiaHandIndices[7] = find_four_of_a_kind(hand)
+    hasHand["hasThreeOfAKind"], partiaHandIndices[3] = find_three_of_a_kind(hand)
     if hasHand["hasThreeOfAKind"]:
-        hasHand["hasFullHouse"], scoredHands[6] = find_full_house(hand)
-    hasHand["hasPair"], scoredHands[1] = find_pair(hand)
+        hasHand["hasFullHouse"], partiaHandIndices[6] = find_full_house(hand)
+    hasHand["hasPair"], partiaHandIndices[1] = find_pair(hand)
     if hasHand["hasPair"]:
-        hasHand["hasTwoPair"], scoredHands[2] = find_two_pair(hand)
+        hasHand["hasTwoPair"], partiaHandIndices[2] = find_two_pair(hand)
 
     # Combo Whole Hands
     hasHand["hasFlushFive"] = hasHand["hasFlush"] and hasHand["hasFiveOfAKind"]
@@ -359,47 +353,51 @@ def evalHand(hand: list, fourFingers: int) -> tuple:
         print("evalHand Function")
         print(hasHand)
 
+    foundMultiCardHand = any(hasHand.values())
+
+    if not foundMultiCardHand: # High Card
+        partiaHandIndices[0] = highCardFinder(hand, True)
+
     # Returns True if any Poker Hands are found, returns False for High Card
-    return any(handType == True for handType in hasHand.values()), scoredHands 
+    return foundMultiCardHand, partiaHandIndices 
 
-
-def scoreHand(hand, scoredHands = None) -> tuple:
-    if debugMode: print("score HandFunction\nscoredHands", scoredHands)
+# 
+def scoreHand(hand, partiaHandIndices, notHighCard) -> tuple:
+    if debugMode: print("score HandFunction \n partiaHandIndices", partiaHandIndices)
     newPartialHand, highestHandName = None, None
-    # Find first true value in the dict
-    for key, value in hasHand.items():
-        if value:
-            highestHandName = key
-            break
-    # Prints Hand Name
-    print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + highestHandName[3:].upper() + Style.RESET_ALL, end=" ")
 
-    partialHands = {"hasFourOfAKind":7, "hasThreeOfAKind":3, "hasPair":1, "hasTwoPair":2}
+    if notHighCard: 
+        # Find first true value in the dict (highest scoring hand type present in hand)
+        for key, value in hasHand.items():
+            if value:
+                highestHandName = key
+                break
+        print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + highestHandName[3:].upper() + Style.RESET_ALL, end=" ")
+    else: # high card
+        highestHandName = "hasHighHand"
+        print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + "High Card" + Style.RESET_ALL, end=" ")
 
     # Check if the hand we're scoring is a partial hand or not
+    partialHands = {"hasFourOfAKind":7, "hasThreeOfAKind":3,"hasTwoPair":2, "hasPair":1, "hasHighHand":0}
     if highestHandName in partialHands.keys():
-        # Feed the correct scoredHands index and score the respective hand indices 
-        indices = scoredHands[partialHands[highestHandName]]
+        # Feed the correct partiaHandIndices index and score the respective hand indices 
+        indices = partiaHandIndices[partialHands[highestHandName]]
         newPartialHand = [card for i, card in enumerate(hand) if i in indices]
         if debugMode:
             print(highestHandName)
-            print(scoredHands[partialHands[highestHandName]])
+            print(partiaHandIndices[partialHands[highestHandName]])
             print(newPartialHand)
-
     hand = hand if newPartialHand == None else newPartialHand
 
     # If highestHandName is None, set highestHandIndex to zero (high hand), else 
-    highestHandIndex = 0 if highestHandName == None else findHighIndex(highestHandName)
-    chip, mult  = calculateChipMult(countChips(hand, highestHandIndex), highestHandIndex)
+    highestHandIndex = 11 if highestHandName == "hasHighHand" else findHighIndex(highestHandName)
+    tempChips = countChips(hand)
+    chip, mult  = calculateChipMult(tempChips, highestHandIndex)
     return chip, mult, hand, highestHandName
 
-def countChips(hand, handIndex):
+# Counts chips given by cards from the played hand
+def countChips(hand): 
     total = 0
-    
-    # High Hand
-    if handIndex == None: 
-        hand = highCardFinder(hand)
-
     for card in hand:
         rank = int(card[:-1])
         if debugMode: print("rank", rank, end=" ")
@@ -408,19 +406,25 @@ def countChips(hand, handIndex):
                 chips = 11
             case 11 | 12 | 13:
                 chips = 10
+            case 0: #to do todo stone cards. currently not in the game
+                chips = 50
             case _:
                 chips = rank
         total += chips
     if debugMode: print(", total", total)
     return total
 
-def highCardFinder(hand):
-    #handIndex argument for high hand decision
-    orderedHand = orderRank(hand)
-    if orderedHand[0][0] == "1":
-        hand = [orderedHand[0]]
-    else:
-        hand = [orderedHand[-1]]
+def highCardFinder(hand: list, findIndex: bool):
+    if findIndex:
+        if hand[0][0] == "1":
+            hand = [0]
+        else:
+            hand = [len(hand) - 1]
+    else: 
+        if hand[0][0] == "1":
+            hand = [hand[0]]
+        else:
+            hand = [hand[-1]]
     return hand
         
 
@@ -437,7 +441,6 @@ def jokerSelection(playerJokers):
     print("Select a Joker by index")
     while len(playerJokers) < start + 3:
         printJokers(currentJokerShop, True)
-        print(currentJokerShop)
         userSelection = int(input())
         if currentJokerShop[userSelection][0] not in playerJokers:
             playerJokers.append(currentJokerShop[userSelection][0])
@@ -545,10 +548,10 @@ def slowWordPrint(word, type):
     print(end=" ")
 
 def endJokerCalculation(chip, mult, XMult, playerJokers, currentDiscards, scoredCards):
-    #playerJokers = ["Stuntman", "Cavendish", "Misprint"] #to do todo: remove
-    allJokers = commonJokers | uncommonJokers | rareJokers#to do todo: remove
-    for i, v in enumerate(allJokers):#to do todo: remove
-        playerJokers.append(v)#to do todo: remove
+    #to do todo: remove this testing block
+    allJokers = commonJokers | uncommonJokers | rareJokers
+    for i, v in enumerate(allJokers): # Gives player every joker
+        playerJokers.append(v)
     
     playerJokers = ["Stuntman", "Cavendish"] #to do todo: remove
 
@@ -681,23 +684,27 @@ def main():
 
     chip, mult, XMult = 0, 0, 1
 
-    scoredHands = None
+    partiaHandIndices = None
     playedHand = []
     discardPile = []
     fourFingers = 5
 
-    baseCards1 = [
+    baseCards = [
         "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
 		"1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", # 14 - 26
 		"1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
 	    "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
-    ];
+    ]
+
+    baseCards2 = [
+        "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C" # 0 - 13
+    ]
 
     # altered with a lot of 1s for testing
-    baseCards = [
-            "1C", "1C", "1C", "1C", "1C", "1C", "7C", "8C", "9C", "10C", "11C", "12C", "13C", # 0 - 13
-"1C","1C","1C","1C","1C","1C","1C","1C","1C","1C" # 40 - 52
-        ];
+    baseCards1 = [
+            "1C", "1C", "1C", "1C", "1C", "1C", "7C", "8C", "9C", "10C", "11C", "12C", "13C",
+            "1C","1C","1C","1C","1C","1C","1C","1C","1C","1C"
+        ]
 
     checkeredDeck = [
             "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 0 - 13
@@ -717,21 +724,21 @@ def main():
 
     clear_console()
     if not fastMode: print("""\
- ____                              _       _             
-|  _ \ ___   __ _ _   _  ___      | | ___ | | _____ _ __ 
-| |_) / _ \ / _` | | | |/ _ \  _  | |/ _ \| |/ / _ \ '__|
-|  _ < (_) | (_| | |_| |  __/ | |_| | (_) |   <  __/ |   
-|_| \_\___/ \__, |\__,_|\___|  \___/ \___/|_|\_\___|_|   
-            |___/                                        
+    ____                              _       _             
+    |  _ \ ___   __ _ _   _  ___      | | ___ | | _____ _ __ 
+    | |_) / _ \ / _` | | | |/ _ \  _  | |/ _ \| |/ / _ \ '__|
+    |  _ < (_) | (_| | |_| |  __/ | |_| | (_) |   <  __/ |   
+    |_| \_\___/ \__, |\__,_|\___|  \___/ \___/|_|\_\___|_|   
+                |___/                                        
                     """)
     
     time.sleep(speed3)
     
-# deck selection 
+    # deck selection 
     if not fastMode: selectedDeck = deckSelection(selectedDeck)
     else: selectedDeck = 0
 
-# apply new deck
+    # apply new deck
     match selectedDeck:
         case 0: #red
             totalDiscards += 1
@@ -766,11 +773,11 @@ def main():
         case _:
             pass
     
-# Joker Selection from joker shop
+    # Joker Selection from joker shop
     if not fastMode: jokerSelection(playerJokers)
     else: playerJokers = []
 
-# apply jokers that affect deck, hand
+    # apply jokers that affect deck, hand
     for jokers in playerJokers:
         match jokers:
             case "Stuntman":
@@ -791,11 +798,12 @@ def main():
         while score < requiredScores[currentLevel]:
             chip, mult, XMult = 0, 0, 1
 
-            if (currentHands == 0 and score < requiredScores[currentLevel]):
+            # Check for lose condition
+            if (currentHands <= 0 and score < requiredScores[currentLevel]):
                 print(score, "is less than ", requiredScores[currentLevel], ".\nGame Over")
                 sys.exit(0)
-            mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, 0)
             
+            mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, 0)
             printHand(hand)
             print("Deck Length:", len(deck))
             userInput = input()
@@ -812,15 +820,17 @@ def main():
             if (userInputAction == 'd' and currentDiscards > 0):
                 currentDiscards -= 1
                 # Removes cards from the hand based on indices
-                newHand = [] #temp var
-                hand = [j for i, j in enumerate(hand) if i not in selectedIndicesSet]
+                keptCards = []
                 for i, j in enumerate(hand):
                     if i not in selectedIndicesSet:
-                        newHand.append(j)
+                        keptCards.append(j)
                     else:
                         discardPile.append(j)
-                hand = newHand
-                hand, deck = discardDraw(hand, deck, handSize)
+                        # todo to do Handle Burnt Joker here
+                        # todo to do Handle Trading Card
+                        # todo to do Handle new jokers that delete certain ranks
+                hand = keptCards
+                hand, deck = drawCards(hand, deck, handSize)
                 
             # PLAY
             elif (userInputAction == 'p'):
@@ -828,20 +838,14 @@ def main():
                 for i in range(len(hand)):
                     if i in selectedIndicesSet:
                         playedHand.append(hand[i])
+                # Sorts the inputted hand
+                playedHand = orderRank(playedHand)
                 print("You played:", playedHand)
                 #notHighCard lets us know if it's a multi card hand thats being scored
-                notHighCard, scoredHands = evalHand(playedHand, fourFingers)
+                notHighCard, partiaHandIndices = evalHand(playedHand, fourFingers)
 
                 scoredHandType = None # might not need this, jokers can check hasHand= {} to check if hand types are present
-                
-                if notHighCard: # multi card poker hand
-                    # Extract scored cards from the input hand for joker score calculation
-                    chip, mult, scoredCards, scoredHandType = scoreHand(playedHand, scoredHands)
-                else:
-                    print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + "High Card" + Style.RESET_ALL, end=" ")
-                    scoredCards, scoredHandType = highCardFinder(hand), 0
-                    chip, mult = calculateChipMult(countChips(playedHand, 0), 11)
-
+                chip, mult, scoredCards, scoredHandType = scoreHand(playedHand, partiaHandIndices, notHighCard)
                 printEquation(chip, mult)
 
                 chip, mult, XMult = endJokerCalculation(chip, mult, XMult, playerJokers, currentDiscards, scoredCards)
@@ -855,12 +859,21 @@ def main():
                 else: 
                     print(score)
 
-                # Reset played hand
-                discardPile.append(playedHand) #todo to do discard pile
-                playedHand = []
                 #todo to do: next hand / round logic 
 
+                keptCards = []
+                for card in hand:
+                    if card not in playedHand:
+                        keptCards.append(card)
+
+                hand, deck = drawCards(keptCards, deck, handSize)
+                # Resets playedHand
+                discardPile.append(playedHand) #todo to do discard pile
+                playedHand = []
                 
+
+            elif (userInputAction == 'd' and currentDiscards == 0):
+                print("Error: Out of Discards. Try Again")
             # help
             elif (userInputAction == '?'):
                 print("\"q\" for quit\n\"c\" to clear text")
@@ -885,10 +898,11 @@ def main():
             currentLevel += 1
             score = 0
             currentHands = totalHands
-            currentDiscards = totalDiscards
-            #baseCards = discardPile + baseCards + #remaininghand? #to do figure out what goes here
-
-            print("--- LEVEL", currentLevel + 1, "---") # + 1 for 0 index
+            currentDiscards = totalDiscards   
+            #baseCards = discardPile + deck + remaining cards in hand #to do todo
+            print("Press enter to continue")
+            temp = input()
+            print("--- LEVEL", currentLevel + 1, "---") # +1 for 0 index
             time.sleep(speed3)
 
     print("You win")
