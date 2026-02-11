@@ -1,0 +1,39 @@
+[MASTER]
+ignore=venv,node_modules,build,dist
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring
+
+[BASIC]
+
+# ----- Naming styles -----
+
+# Classes stay PascalCase (normal Python convention)
+class-naming-style=PascalCase
+
+# Functions + methods -> camelCase
+function-naming-style=camelCase
+method-naming-style=camelCase
+
+# Variables/attributes -> camelCase
+variable-naming-style=camelCase
+attr-naming-style=camelCase
+argument-naming-style=camelCase
+
+# Constants remain UPPER_CASE
+const-naming-style=UPPER_CASE
+
+# Modules/files usually snake_case, but you can change if desired:
+module-naming-style=snake_case
+
+# ----- Allow short names like i, j, x -----
+good-names=i,j,k,x,y,z,ex,Run,_,XMult
+
+[FORMAT]
+max-line-length=140
+
+[DESIGN]
+max-args=8

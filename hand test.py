@@ -1,4 +1,4 @@
-import TheGame
+import src.game as TheGame
 
 # parallel list vs dict
 hasHand = {
@@ -47,6 +47,6 @@ if 1:
         print(i, "--------------------")
         print(testHandNames[i])
         notHighCard, scoredCards = TheGame.evalHand(testHands[i], 5)
-        TheGame.scoreHand(testHands[i], scoredCards)
+        TheGame.scoreHand(testHands[i], scoredCards, notHighCard)
 
         print("")
