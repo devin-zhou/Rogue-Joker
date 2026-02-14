@@ -13,14 +13,14 @@ def printJokers(jokers, shop=False):
             print(f"{j:<3}{jokers[j][0]:<25}{jokers[j][1][0]}")
         else:  # Print the player's jokers
             print(f"{jokers[j][0]:<25}{jokers[j][1][0]}")
-        time.sleep(speed1)
+        time.sleep(SPEED_1)
         
 def printHand(hand):
     for index, value in enumerate(hand):
         print(f"{index}.", end=" ")
         colorCard(value)
         print()
-        time.sleep(speed2)
+        time.sleep(SPEED_2)
 
 def colorCard(card):
     match card[-1]:
@@ -63,39 +63,12 @@ def rainbowText(text):
     for i, char in enumerate(str(text)):
         colour = colours[i % len(colours)]
         print(colour + Style.BRIGHT + char, end="", flush=True)
-        time.sleep(speed1)
+        time.sleep(SPEED_2)
 
     print(Style.RESET_ALL)  # Reset color at the end
-    
-def printInstructions():
-    print(
-        """
-     ____                              _       _             
-    |  _ \ ___   __ _ _   _  ___      | | ___ | | _____ _ __ 
-    | |_) / _ \ / _` | | | |/ _ \  _  | |/ _ \| |/ / _ \ '__|
-    |  _ < (_) | (_| | |_| |  __/ | |_| | (_) |   <  __/ |   
-    |_| \_\___/ \__, |\__,_|\___|  \___/ \___/|_|\_\___|_|   
-                |___/                                        
-                    """
-    )
-    time.sleep(speed3)
-    slowWordPrint(
-        """
-    Rogue Joker is a poker roguelike where you create poker hands to earn high scores.
-    Each round, you are dealt a hand of cards and can choose to play or discard up to 5 cards. 
-    The rarer your poker hands are, the more chips and multipliers (mult) you'll earn to increase your score. 
-    Acquire Jokers to augment your scoring potential and create unique synergies.
-    """, None, SPEED_0,
-    )
-    time.sleep(speed3)
-    slowWordPrint(
-        """
-    Start by selecting a deck, then choosing 3 Jokers.
 
-    """, None, SPEED_0,
-    )
-    
-def slowWordPrint(word, colourType, speed=speed1):
+
+def slowWordPrint(word, colourType = None, speed=SPEED_1):
     for char in str(word):
         time.sleep(speed)
         if colourType == "chip":
@@ -112,20 +85,51 @@ def slowWordPrint(word, colourType, speed=speed1):
             print(char, end="", flush=True)
     print(end=" ")
 
+
+def printInstructions():
+    print(
+        """
+     ____                              _       _             
+    |  _ \ ___   __ _ _   _  ___      | | ___ | | _____ _ __ 
+    | |_) / _ \ / _` | | | |/ _ \  _  | |/ _ \| |/ / _ \ '__|
+    |  _ < (_) | (_| | |_| |  __/ | |_| | (_) |   <  __/ |   
+    |_| \_\___/ \__, |\__,_|\___|  \___/ \___/|_|\_\___|_|   
+                |___/                                        
+                    """
+    )
+    time.sleep(SPEED_3)
+    slowWordPrint(
+        """
+    Rogue Joker is a poker roguelike where you create poker hands to earn high scores.
+    Each round, you are dealt a hand of cards and can choose to play or discard up to 5 cards. 
+    The rarer your poker hands are, the more chips and multipliers (mult) you'll earn to increase your score. 
+    Acquire Jokers to augment your scoring potential and create unique synergies.
+    """, None, SPEED_0,
+    )
+    time.sleep(SPEED_3)
+    slowWordPrint(
+        """
+    Start by selecting a deck, then choosing 3 Jokers. Press enter to start.
+
+    """, None, SPEED_0,
+    )
+    input()
+
+
 def endOfCalcPrint(chip, mult, XMult):
-    time.sleep(speed2)
+    time.sleep(SPEED_3)
     print(Fore.BLUE + "\nTotal Chips:" + Style.RESET_ALL)
     slowWordPrint(chip, "chip")
 
-    time.sleep(speed2)
+    time.sleep(SPEED_3)
     print(Fore.RED + "\nTotal Mult:" + Style.RESET_ALL)
     slowWordPrint(mult, "mult")
 
-    time.sleep(speed2)
+    time.sleep(SPEED_3)
     print(Fore.RED + Back.WHITE + "\nTotal XMult:" + Style.RESET_ALL)
     slowWordPrint(XMult, "XMult")
 
-    time.sleep(speed1)
+    time.sleep(SPEED_3)
     print("\nHand score ", end="")
     printEquation(chip, mult, XMult)
 
@@ -140,3 +144,6 @@ def mainLoopPrompt(goal, currentScore, currentHands, currentDiscards, printMode=
             f"{Fore.BLUE}Hands: {Back.BLUE}{currentHands}{Style.RESET_ALL}"
             + f"\t{Fore.RED}Discards: {Back.RED}{currentDiscards}{Style.RESET_ALL}"
         )
+
+def magPrint(handPrint):
+    print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + handPrint + Style.RESET_ALL, end=" ",)

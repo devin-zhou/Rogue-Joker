@@ -7,7 +7,6 @@ import copy
 import text_ui
 
 from pick import pick
-from colorama import Fore, Back, Style
 
 chipMultTable = [
     [160, 16, 50, 3, 1],  # flush five
@@ -80,7 +79,7 @@ rareJokers = {
 
 DEBUG_MODE = 0
 
-FAST_MODE = True
+FAST_MODE = False
 SPEED_0 = 0.01
 SPEED_1 = 0.05
 SPEED_2 = 0.075
@@ -261,9 +260,9 @@ def findFullHouse(hand: list) -> tuple:
     hasThree, threeIndex = findThreeOfAKind(hand)
 
     if hasThree:
-        hand[threeIndex[0]] = "x"
-        hand[threeIndex[1]] = "y"
-        hand[threeIndex[2]] = "z"
+        hand[threeIndex[0]] = "100"
+        hand[threeIndex[1]] = "200"
+        hand[threeIndex[2]] = "300"
         hasPair, pairIndex = findPair(hand)
 
     if DEBUG_MODE:
@@ -291,9 +290,7 @@ def orderSuit(hand: list) -> list:
                 clubs.append(cardSuit)
             case _:
                 print("Error")
-    return (
-        orderRank(spades) + orderRank(hearts) + orderRank(diamonds) + orderRank(clubs)
-    )
+    return (orderRank(spades) + orderRank(hearts) + orderRank(diamonds) + orderRank(clubs))
 
 
 def removeSuits(hand):
@@ -356,7 +353,6 @@ def evalHand(hand: list, fourFingers: int) -> tuple:
     return foundMultiCardHand, partiaHandIndices
 
 
-
 def scoreHand(hand, partiaHandIndices, notHighCard) -> tuple:
     if DEBUG_MODE:
         print("score HandFunction \n partiaHandIndices", partiaHandIndices)
@@ -368,18 +364,10 @@ def scoreHand(hand, partiaHandIndices, notHighCard) -> tuple:
             if value:
                 highestHandName = key
                 break
-        print(
-            Fore.LIGHTMAGENTA_EX
-            + Style.BRIGHT
-            + highestHandName[3:].upper()
-            + Style.RESET_ALL,
-            end=" ",
-        )
+        text_ui.magPrint(highestHandName[3:].upper())
     else:  # high card
         highestHandName = "hasHighHand"
-        print(
-            Fore.LIGHTMAGENTA_EX + Style.BRIGHT + "High Card" + Style.RESET_ALL, end=" "
-        )
+        text_ui.magPrint("High Card")
 
     # Check if the hand we're scoring is a partial hand or not
     partialHands = {
@@ -476,26 +464,17 @@ def jokerShop() -> list:
     #allJokers = commonJokers | uncommonJokers | rareJokers
     currentJokerShop = []
 
-    rnglist = [0, 0, 0]
-    for _ in range(5):
+    for i in range(8):
         rng = random.randrange(0, 100)
-        if rng < 50:
-            rnglist.append(0)
-        elif rng > 85:
-            rnglist.append(2)
-        else:
-            rnglist.append(1)
-
-    for i in range(len(rnglist)):
-        if rnglist[i] == 0:  # common
+        if i < 3 or rng < 50:
             key, value = random.choice(list(commonJokers.items()))
             del commonJokers[key]
-        elif rnglist[i] == 1:  # uncommon
-            key, value = random.choice(list(uncommonJokers.items()))
-            del uncommonJokers[key]
-        else:  # rare
+        elif rng > 85:
             key, value = random.choice(list(rareJokers.items()))
             del rareJokers[key]
+        else:
+            key, value = random.choice(list(uncommonJokers.items()))
+            del uncommonJokers[key]
         currentJokerShop.append((key, value))
 
     return currentJokerShop
@@ -806,11 +785,11 @@ def main():
 
                 text_ui.endOfCalcPrint(chip, mult, XMult)
                 score += chip * (mult * XMult)
-                print("Total level Score", end=" ")
+                text_ui.slowWordPrint("Total level Score", None, SPEED_2)
                 if score > requiredScores[currentLevel]:
                     text_ui.rainbowText(score)
                 else:
-                    print(score)
+                    text_ui.slowWordPrint(score, None, SPEED_2)
 
                 # todo to do: next hand / round logic
 
