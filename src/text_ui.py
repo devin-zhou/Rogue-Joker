@@ -2,25 +2,33 @@ import time
 
 from colorama import Fore, Back, Style
 
-SPEED_0 = 0.01
-SPEED_1 = 0.05
-SPEED_2 = 0.075
-SPEED_3 = 0.3
+speeds = [0.01, 0.05, 0.075, 0.3]
 
 def printJokers(jokers, shop=False):
-    for j in range(len(jokers)):
+    for j, joker in enumerate(jokers):
         if shop:  # Print Joker Shop items # dont need this after importing pick
-            print(f"{j:<3}{jokers[j][0]:<25}{jokers[j][1][0]}")
+            print(f"{j:<3}{joker[0]:<25}{joker[1][0]}")
         else:  # Print the player's jokers
-            print(f"{jokers[j][0]:<25}{jokers[j][1][0]}")
-        time.sleep(SPEED_1)
-        
+            print(f"{joker[0]:<25}{joker[1][0]}")
+        time.sleep(speeds[1])
+
+def printDeck(baseCards, remainingDeck):
+    print("Base Cards:", len(baseCards))
+    for card in baseCards:
+        colorCard(card)
+        print(end=" ")
+    print("\nRemaining Deck:", len(remainingDeck))
+    for card in remainingDeck:
+        colorCard(card)
+        print(end=" ")
+    print()
+
 def printHand(hand):
     for index, value in enumerate(hand):
         print(f"{index}.", end=" ")
         colorCard(value)
         print()
-        time.sleep(SPEED_2)
+        time.sleep(speeds[2])
 
 def colorCard(card):
     match card[-1]:
@@ -32,10 +40,10 @@ def colorCard(card):
             print(Style.BRIGHT + Fore.BLUE + card, end="")
         case "C":
             print(Style.BRIGHT + Fore.GREEN + card, end="")
-        case _:  # wildcard modifier?
+        case "X":  # wildcard
             print(Style.BRIGHT + Fore.MAGENTA + card, end="")
     print(Style.RESET_ALL, end="")
-    
+
 def printEquation(chip, mult, XMult=None):
     if XMult is None:
         print(
@@ -63,12 +71,12 @@ def rainbowText(text):
     for i, char in enumerate(str(text)):
         colour = colours[i % len(colours)]
         print(colour + Style.BRIGHT + char, end="", flush=True)
-        time.sleep(SPEED_2)
+        time.sleep(speeds[2])
 
     print(Style.RESET_ALL)  # Reset color at the end
 
 
-def slowWordPrint(word, colourType = None, speed=SPEED_1):
+def slowWordPrint(word, colourType = None, speed=speeds[1]):
     for char in str(word):
         time.sleep(speed)
         if colourType == "chip":
@@ -87,6 +95,8 @@ def slowWordPrint(word, colourType = None, speed=SPEED_1):
 
 
 def printInstructions():
+    # Disable all the anomalous-backslash-in-string violations in this function
+    # pylint: disable=anomalous-backslash-in-string
     print(
         """
      ____                              _       _             
@@ -97,49 +107,51 @@ def printInstructions():
                 |___/                                        
                     """
     )
-    time.sleep(SPEED_3)
+    time.sleep(speeds[3])
     slowWordPrint(
         """
     Rogue Joker is a poker roguelike where you create poker hands to earn high scores.
     Each round, you are dealt a hand of cards and can choose to play or discard up to 5 cards. 
     The rarer your poker hands are, the more chips and multipliers (mult) you'll earn to increase your score. 
     Acquire Jokers to augment your scoring potential and create unique synergies.
-    """, None, SPEED_0,
+    """, None, speeds[0],
     )
-    time.sleep(SPEED_3)
+    time.sleep(speeds[3])
     slowWordPrint(
         """
     Start by selecting a deck, then choosing 3 Jokers. Press enter to start.
 
-    """, None, SPEED_0,
+    """, None, speeds[0],
     )
     input()
+    # pylint: enable=anomalous-backslash-in-string
 
 
 def endOfCalcPrint(chip, mult, XMult):
-    time.sleep(SPEED_3)
+    time.sleep(speeds[3])
     print(Fore.BLUE + "\nTotal Chips:" + Style.RESET_ALL)
     slowWordPrint(chip, "chip")
 
-    time.sleep(SPEED_3)
+    time.sleep(speeds[3])
     print(Fore.RED + "\nTotal Mult:" + Style.RESET_ALL)
     slowWordPrint(mult, "mult")
 
-    time.sleep(SPEED_3)
+    time.sleep(speeds[3])
     print(Fore.RED + Back.WHITE + "\nTotal XMult:" + Style.RESET_ALL)
     slowWordPrint(XMult, "XMult")
 
-    time.sleep(SPEED_3)
+    time.sleep(speeds[3])
     print("\nHand score ", end="")
     printEquation(chip, mult, XMult)
 
 
 def mainLoopPrompt(goal, currentScore, currentHands, currentDiscards, printMode=0):
     if printMode < 1:
-        print("\nEnter " + Back.BLUE + Style.BRIGHT + "P" + Style.RESET_ALL + " followed by indices to play the hand. " + Back.RED + Style.BRIGHT + "D" + Style.RESET_ALL + " for discard. E.g. p 023")
-    if printMode < 2:
+        print("\nEnter " + Back.BLUE + Style.BRIGHT + "P" + Style.RESET_ALL + " followed by indices to play the hand. "
+              + Back.RED + Style.BRIGHT + "D" + Style.RESET_ALL + " for discard. E.g. p 023")
+        print("Enter " + Back.YELLOW + Style.BRIGHT + "?" + Style.RESET_ALL + " for instructions. ")
+    if printMode > 1:
         print("Score to beat:", goal, "Current level score:", currentScore)
-    if printMode < 3:
         print(
             f"{Fore.BLUE}Hands: {Back.BLUE}{currentHands}{Style.RESET_ALL}"
             + f"\t{Fore.RED}Discards: {Back.RED}{currentDiscards}{Style.RESET_ALL}"

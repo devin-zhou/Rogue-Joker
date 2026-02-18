@@ -37,3 +37,4 @@ max-line-length=140
 
 [DESIGN]
 max-args=8
+max-positional-arguments=6
