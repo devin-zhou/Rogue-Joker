@@ -76,7 +76,7 @@ def rainbowText(text):
     print(Style.RESET_ALL)  # Reset color at the end
 
 
-def slowWordPrint(word, colourType = None, speed=speeds[1]):
+def slowPrint(word, colourType = None, speed=speeds[1]):
     for char in str(word):
         time.sleep(speed)
         if colourType == "chip":
@@ -108,7 +108,7 @@ def printInstructions():
                     """
     )
     time.sleep(speeds[3])
-    slowWordPrint(
+    slowPrint(
         """
     Rogue Joker is a poker roguelike where you create poker hands to earn high scores.
     Each round, you are dealt a hand of cards and can choose to play or discard up to 5 cards. 
@@ -117,7 +117,7 @@ def printInstructions():
     """, None, speeds[0],
     )
     time.sleep(speeds[3])
-    slowWordPrint(
+    slowPrint(
         """
     Start by selecting a deck, then choosing 3 Jokers. Press enter to start.
 
@@ -130,15 +130,15 @@ def printInstructions():
 def endOfCalcPrint(chip, mult, XMult):
     time.sleep(speeds[3])
     print(Fore.BLUE + "\nTotal Chips:" + Style.RESET_ALL)
-    slowWordPrint(chip, "chip")
+    slowPrint(chip, "chip")
 
     time.sleep(speeds[3])
     print(Fore.RED + "\nTotal Mult:" + Style.RESET_ALL)
-    slowWordPrint(mult, "mult")
+    slowPrint(mult, "mult")
 
     time.sleep(speeds[3])
     print(Fore.RED + Back.WHITE + "\nTotal XMult:" + Style.RESET_ALL)
-    slowWordPrint(XMult, "XMult")
+    slowPrint(XMult, "XMult")
 
     time.sleep(speeds[3])
     print("\nHand score ", end="")
