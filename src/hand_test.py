@@ -1,18 +1,7 @@
+import deck_functions
 import game
 
-hasHand = {
-    "hasFlushFive": False,
-    "hasFlushHouse": False,
-    "hasFiveOfAKind": False,
-    "hasStraightFlush": False,
-    "hasFourOfAKind": False,
-    "hasFullHouse": False,
-    "hasFlush": False,
-    "hasStraight": False,
-    "hasThreeOfAKind": False,
-    "hasTwoPair": False,
-    "hasPair": False,
-}
+hasHand = game.getHasHand()
 
 TEST_RANDOM = False
 
@@ -65,10 +54,10 @@ if not TEST_RANDOM:
         if testHandNames[i] == "Four Fingers Flush":
             fourFingers = 4 # on
 
-        hand = game.orderRank(testHands[i])
+        hand = deck_functions.orderRank(testHands[i])
         print(i, "-", hand)
         print("Test Case:", testHandNames[i])
-        notHighCard, partiaHandIndices, _ = game.evalHand(hand, fourFingers)
+        notHighCard, partiaHandIndices, _ = game.evalHand(hand, hasHand, fourFingers)
 
         print("Result:")
         game.scoreHand(hand, partiaHandIndices, notHighCard, fourFingers, chipMultTable, hasHand)

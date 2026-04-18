@@ -6,61 +6,12 @@ import copy
 
 from pick import pick
 
+import data
+import deck_functions
 import text_ui
 
 
 
-commonJokers = {
-    "Classic Joker": ["+4 Mult", 0, 4, 1, "common", 2, 1, 0],
-    "Misprint": ["+0-23 Mult", 0, 0, 1, "common", 4, 2, 0],
-    "Cavendish": ["Cavendish: X3 Mult 1 in 1000 chance you instantly lose"],
-    "Lusty Joker": ["Played cards with Heart suit give +3 Mult when scored"],
-    "Greedy Joker": ["Played cards with Diamond suit give +3 Mult when scored"],
-    "Wrathful Joker": ["Played cards with Spade suit give +3 Mult when scored"],
-    "Gluttonous Joker": ["Played cards with Club suit give +3 Mult when scored"],
-    "Jolly Joker": ["+8 Mult if played hand contains a Pair"],
-    "Zany Joker": ["+12 Mult if played hand contains a Three of a Kind"],
-    "Wily Joker": ["+100 Chips if played hand contains a Three of a Kind"],
-    "Droll Joker": ["+10 Mult if played hand contains a Flush"],
-    "Mystic Summit": ["+15 Mult when 0 discards remaining"],
-    "Trading Card": ["If first discard of round has only 1 card, destroy it"],
-    "Smiley Face": ["Played face cards give +5 Mult when scored"],
-    "Half Joker": ["+20 Mult if scored hand contains 3 or fewer cards"],
-    "Gros Michel": ["+15 Mult, 1 in 10 chance this is destroyed each use"],
-    "Even Steven": [
-        "Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)"
-    ],
-    "Odd Todd": [
-        "Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)"
-    ],
-    "Scholar": ["Played Aces give +20 Chips and +4 Mult when scored"],
-}
-# name, desc, + Chips, + Mult, X Mult, rarity, cost, sell_cost, counter (scaling)
-
-# sell_cost = math.max(1, math.floor(cost/2))
-
-uncommonJokers = {
-    "Four Fingers": ["All Flushes and Straights can be made with 4 cards"],
-    "Acrobat": ["X3 Mult on final hand of round"],
-    "Bloodstone": [
-        "1 in 2 chance for played cards with Heart suit to give X1.5 Mult when scored"
-    ],
-    "Arrowhead": ["Played cards with Spade suit give +50 Chips when scored"],
-    "Onyx Agate": ["Played cards with Club suit give +7 Mult when scored"],
-    "Fibonacci": ["Each played Ace, 2, 3, 5, or 8 gives +8 Mult when scored"],
-    "Space Joker": ["1 in 4 chance to upgrade level of played poker hand"],
-}
-
-rareJokers = {
-    "Stuntman": ["+250 Chips, -2 hand size"],
-    "The Trio": ["X3 Mult if played hand contains a Three of a Kind"],
-    "The Family": ["X4 Mult if played hand contains a Four of a Kind"],
-    "The Order": ["X3 Mult if played hand contains a Straight"],
-    "The Tribe": ["X2 Mult if played hand contains a Flush"],
-    "Brainstorm": ["Copies the ability of leftmost Joker"],
-    "Burnt Joker": ["Upgrade the level of the first discarded poker hand each round"],
-    "Triboulet": ["Played Kings and Queens each give X2 Mult when scored"],
-}
 
 DEBUG_MODE = 0
 
@@ -105,10 +56,31 @@ class Card:
     # Card Enhancements: Bonus, Mult, Wild, Glass, Steel, Stone, Gold, Lucky
     # Editions: Foil (+50 chips), Holographic (+10 Mult), Polychrome (X1.5 Mult), Negative
     # Seals: Gold Seal, Red Seal, Blue Seal, Purple Seal
-    
-class gameState:
+
+class GameState:
+    def __init__(self, selectedDeck, baseCards, handSize, totalHands, totalDiscards):
+        self.selectedDeck = selectedDeck
+        self.baseCards = baseCards
+        self.handSize = handSize
+        self.totalHands = totalHands
+        self.totalDiscards = totalDiscards
+
+class JokerState:
+    def __init__(self, playerJokers, commonJokers, uncommonJokers, rareJokers):
+        self.playerJokers = playerJokers
+        self.commonJokers = commonJokers
+        self.uncommonJokers = uncommonJokers
+        self.rareJokers = rareJokers
+
+class ScoreState:
     def __init__(self, ):
         pass
+
+class RoundState:
+    def __init__(self, currentHands, currentDiscards, hasHand):
+        self.currentHands = currentHands
+        self.currentDiscards = currentDiscards
+        self.hasHand = hasHand
 
 def generateHand(handSize, baseCards) -> tuple:
     deck = copy.deepcopy(baseCards)
@@ -118,7 +90,7 @@ def generateHand(handSize, baseCards) -> tuple:
 
 def drawCards(hand, deck, handSize) -> tuple:
     numNewCards = handSize - len(hand)
-    return orderRank(hand + deck[0:numNewCards]), deck[numNewCards:]
+    return deck_functions.orderRank(hand + deck[0:numNewCards]), deck[numNewCards:]
 
 
 def findFlush(hand: list, flushSize=5) -> bool:
@@ -281,29 +253,6 @@ def removeSuits(hand):
         int(card[:-1]) for card in hand
     ]  # Removes the suit character at the end of each index
     return hand
-
-
-# Orders the hand by rank, keeps the suits
-def orderRank(hand: list) -> list:
-    # It can be done in one line with the sorted() function and a lambda function / anonymous function
-    return sorted(hand, key=lambda card: int(card[:-1]))
-
-# Orders the hand suit. Ordered by rank within each respective suit.
-def orderSuit(hand: list) -> list:
-    spades, hearts, diamonds, clubs, wildcards  = [], [], [], [], []
-    for cardSuit in hand:
-        match cardSuit[-1]:
-            case "S":
-                spades.append(cardSuit)
-            case "H":
-                hearts.append(cardSuit)
-            case "D":
-                diamonds.append(cardSuit)
-            case "C":
-                clubs.append(cardSuit)
-            case _:
-                wildcards.append(cardSuit)
-    return orderRank(spades) + orderRank(hearts) + orderRank(diamonds) + orderRank(clubs) + orderRank(wildcards)
 
 
 # Finds the index of the input hand name from the hasHand dict
@@ -473,16 +422,16 @@ def countChips(hand):
 def calculateChipMult(cardChips, handIndex, chipMultTable) -> tuple:
     baseChip, chipScaling = chipMultTable[handIndex][0], chipMultTable[handIndex][2]
     baseMult, multScaling = chipMultTable[handIndex][1], chipMultTable[handIndex][3]
-    handLvl = chipMultTable[handIndex][4] - 1 
-    
+    handLvl = chipMultTable[handIndex][4] - 1
+
     calculatedChip = cardChips + baseChip + (chipScaling * handLvl)
     calculatedMult = baseMult + (multScaling * handLvl)
     return calculatedChip, calculatedMult
 
 
 
-def jokerSelection(playerJokers):
-    currentJokerShop = jokerShop()
+def jokerSelection(jokerState):
+    currentJokerShop = jokerShop(jokerState)
     selected = []
     # tuple of strings with the joker name and description for the current joker shop
     options = tuple(map(lambda item: item[0] + " - " + item[1][0], currentJokerShop))
@@ -492,26 +441,26 @@ def jokerSelection(playerJokers):
         selected = pick(options, title, multiselect=True, min_selection_count=3)
 
     for i in selected:
-        playerJokers.append(currentJokerShop[i[1]])
+        jokerState.playerJokers.append(currentJokerShop[i[1]])
 
-    text_ui.printJokers(playerJokers)
+    text_ui.printJokers(jokerState.playerJokers)
 
 
-def jokerShop() -> list:
+def jokerShop(jokerState) -> list:
     #allJokers = commonJokers | uncommonJokers | rareJokers
     currentJokerShop = []
 
     for i in range(8):
         rng = random.randrange(0, 100)
         if i < 3 or rng < 50:
-            key, value = random.choice(list(commonJokers.items()))
-            del commonJokers[key]
+            key, value = random.choice(list(jokerState.commonJokers.items()))
+            del jokerState.commonJokers[key]
         elif rng > 85:
-            key, value = random.choice(list(rareJokers.items()))
-            del rareJokers[key]
+            key, value = random.choice(list(jokerState.rareJokers.items()))
+            del jokerState.rareJokers[key]
         else:
-            key, value = random.choice(list(uncommonJokers.items()))
-            del uncommonJokers[key]
+            key, value = random.choice(list(jokerState.uncommonJokers.items()))
+            del jokerState.uncommonJokers[key]
         currentJokerShop.append((key, value))
 
     return currentJokerShop
@@ -523,7 +472,7 @@ def deckSelection(allDecks) -> int:
     title = "Select a deck (ENTER to continue): "
     selected = pick(options, title)
     print("Selected Deck:", selected[0])
-    return selected[1]
+    return options[selected[1]].split(" - ")[0] # Returns the name of the deck without the description
 
 
 
@@ -626,7 +575,7 @@ def clearConsole():
 
 
 
-def main(forcePlayerJokers=[]):
+def main(forcePlayerJokers=None):
     playerJokers = forcePlayerJokers
     selectedDeck = None
 
@@ -642,56 +591,18 @@ def main(forcePlayerJokers=[]):
     chip, mult, XMult = 0, 0, 1
 
     partialHandIndices = None
-    playedHand = []
     discardPile = []
     fourFingers = 5
 
     hasHand = getHasHand()
-
     chipMultTable = getChipMultTable()
 
-
-    allDecks = {
-        "Red Deck": "+1 discard every round",
-        "Blue Deck": "+1 hand every round",
-        "Abandoned Deck": "No Face Cards in your deck",
-        "Checkered Deck": "Only Hearts and Spades",
-        "Picky Deck": "Start with the Trading Card Joker",
-        "Coal Deck": "Start with the Burnt Joker",
-        "Green Deck": "Start with 3 random Common Jokers",
-        "Gambler Deck": "Start with 2 random Uncommon Jokers",
-        "High Roller Deck": "Start with a random Rare Joker",
-        "Cobble Deck": "All Face Cards are replaced with Stone Cards (50 chips each)",
-        "Erratic Deck": "All Ranks and Suits in deck are randomized",
-        "Jungle Deck": "All Face Cards become Wild Cards (Counts as all Suits)"
-    }
-
+    allDecks = data.allDecks
     baseCards = getBaseCards()
 
-    '''
-    # altered with a lot of 1s for testing
-    baseCards1 = [
-            "1C", "1C", "1C", "1C", "1C", "1C", "7C", "8C", "9C", "10C", "11C", "12C", "13C",
-            "1C","1C","1C","1C","1C","1C","1C","1C","1C","1C"
-        ]
-
-    baseCards2 = [
-        "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C", "11C", "12C", "13C" # 0 - 13
-    ]
-    '''
-    checkeredDeck = [
-            "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 0 - 13
-            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S", # 14 - 26
-            "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H", "11H", "12H", "13H", # 27 - 39
-            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S", "11S", "12S", "13S" # 40 - 52
-        ]
-
-    abandonedDeck = [
-            "1C", "2C", "3C", "4C", "5C", "6C", "7C", "8C", "9C", "10C",
-            "1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D",
-            "1H", "2H", "3H", "4H", "5H", "6H", "7H", "8H", "9H", "10H",
-            "1S", "2S", "3S", "4S", "5S", "6S", "7S", "8S", "9S", "10S"
-        ]
+    gameState1 = GameState(selectedDeck, baseCards, handSize, totalHands, totalDiscards)
+    roundState1 = RoundState(currentHands, currentDiscards, hasHand)
+    jokerState1 = JokerState(playerJokers, data.commonJokers, data.uncommonJokers, data.rareJokers)
 
     clearConsole()
     if not FAST_MODE:
@@ -699,64 +610,20 @@ def main(forcePlayerJokers=[]):
         time.sleep(speeds[3])
 
     # deck selection
-    # if not FAST_MODE: selectedDeck = deckSelection(selectedDeck)
+    # if not FAST_MODE: selectedDeck = deckSelection(allDecks)
     # else: selectedDeck = 0
-    selectedDeck = deckSelection(allDecks)
+    gameState1.selectedDeck = deckSelection(allDecks)
 
     # apply new deck
-    match selectedDeck:
-        case 0:  # red
-            totalDiscards += 1
-            currentDiscards = totalDiscards
-        case 1:  # blue
-            totalHands += 1
-            currentHands = totalHands
-        case 2:  # abandoned
-            baseCards = abandonedDeck
-        case 3:  # checkered
-            baseCards = checkeredDeck
-        case 4:  # picky
-            playerJokers.append("Trading Card")
-            del commonJokers["Trading Card"]
-        case 5:  # coal
-            playerJokers.append("Burnt Joker")
-            del commonJokers["Burnt Joker"]
-        case 6:  # green
-            for i in range(3):
-                key, item = random.choice(list(commonJokers.items()))
-                del commonJokers[key]
-                playerJokers.append([key, item])
-        case 7:  # Gambler
-            for i in range(2):
-                key, item = random.choice(list(uncommonJokers.items()))
-                del uncommonJokers[key]
-                playerJokers.append([key, item])
-        case 8:  # high roller
-            key, item = random.choice(list(rareJokers.items()))
-            del rareJokers[key]
-            playerJokers.append([key, item])
-        case 9:  # cobble
-            for i in range(len(baseCards)):
-                if baseCards[i][:-1] in {"11", "12", "13"}:
-                    baseCards[i] = "50" + baseCards[i][-1]
-        case 10:  # erratic
-            for i in range(len(baseCards)):
-                rank = random.randint(1, 13)
-                suit = random.choice(["S", "H", "D", "C"])
-                baseCards[i] = str(rank) + suit
-            baseCards = orderSuit(baseCards)
-        case 11: # jungle
-            for i in range(len(baseCards)):
-                if baseCards[i][:-1] in {"11", "12", "13"}:
-                    baseCards[i] = baseCards[i][0] + "X"
-        case _:
-            pass
+    deck_functions.applyDeck(gameState1.selectedDeck, roundState1, jokerState1, gameState1)
 
     # Joker Selection from joker shop
-    if not FAST_MODE: jokerSelection(playerJokers)
-    else: playerJokers = ["Four Fingers", "Burnt Joker"]
-    #jokerSelection(playerJokers)
-    
+    if not FAST_MODE:
+        jokerSelection(jokerState1)
+    else:
+        playerJokers = ["Four Fingers", "Burnt Joker"]
+    #jokerSelection(jokerState1)
+
     # apply jokers that affect deck, hand
     for jokers in playerJokers:
         match jokers:
@@ -769,7 +636,7 @@ def main(forcePlayerJokers=[]):
 
     # todo to do adjust and move to account for multiple levels
     handWithDeck = generateHand(handSize, baseCards)
-    hand, deck = orderRank(handWithDeck[0]), handWithDeck[1]
+    hand, deck = deck_functions.orderRank(handWithDeck[0]), handWithDeck[1]
 
     time.sleep(speeds[3])
     # Per game Loop
@@ -786,7 +653,7 @@ def main(forcePlayerJokers=[]):
                 print(score, "is less than ", requiredScores[currentLevel], ".\nGame Over")
                 sys.exit(0)
 
-            text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, score)
+            text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, 0)
             text_ui.printHand(hand)
             print("Deck Length:", len(deck))
             userInput = input()
@@ -838,7 +705,7 @@ def main(forcePlayerJokers=[]):
                 currentHands -= 1
                 playedHand = [card for i, card in enumerate(hand) if i in selectedIndicesSet]
                 # SORTS the inputted hand before evaluating
-                playedHand = orderRank(playedHand)
+                playedHand = deck_functions.orderRank(playedHand)
                 print("You played:", playedHand)
                 # notHighCard lets us know if it's a multi card hand thats being scored
                 notHighCard, partialHandIndices, hasHand = evalHand(playedHand, hasHand, fourFingers)
@@ -868,7 +735,6 @@ def main(forcePlayerJokers=[]):
                 hand, deck = drawCards(keptCards, deck, handSize)
                 # Resets playedHand
                 discardPile.append(playedHand)  # todo to do discard pile
-                playedHand = []
 
             elif userInputAction == "d" and currentDiscards == 0:
                 print("Error: Out of Discards. Try Again")
@@ -894,7 +760,7 @@ def main(forcePlayerJokers=[]):
             # VIEW DECK
             elif userInputAction == "v":
                 # Temp variable to prevent changing deck order
-                remainingDeckTemp = orderSuit(deck)
+                remainingDeckTemp = deck_functions.orderSuit(deck)
                 text_ui.printDeck(baseCards, remainingDeckTemp)
 
             else:

@@ -152,10 +152,10 @@ def mainLoopPrompt(goal, currentScore, currentHands, currentDiscards, printMode=
         print("Enter " + Back.YELLOW + Style.BRIGHT + "?" + Style.RESET_ALL + " for instructions. ")
     if printMode > 1:
         print("Score to beat:", goal, "Current level score:", currentScore)
-        print(
-            f"{Fore.BLUE}Hands: {Back.BLUE}{currentHands}{Style.RESET_ALL}"
-            + f"\t{Fore.RED}Discards: {Back.RED}{currentDiscards}{Style.RESET_ALL}"
-        )
+    print(
+        f"{Fore.BLUE}Hands: {Back.BLUE}{currentHands}{Style.RESET_ALL}"
+        + f"\t{Fore.RED}Discards: {Back.RED}{currentDiscards}{Style.RESET_ALL}"
+    )
 
 def magPrint(handPrint):
     print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + handPrint + Style.RESET_ALL, end=" ",)
