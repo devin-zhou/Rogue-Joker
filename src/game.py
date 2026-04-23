@@ -575,8 +575,8 @@ def clearConsole():
 
 
 
-def main(forcePlayerJokers=None):
-    playerJokers = forcePlayerJokers
+def main(forcePlayerJokers = None):
+    playerJokers = [] if forcePlayerJokers is None else forcePlayerJokers
     selectedDeck = None
 
     #dollars = 0
@@ -593,6 +593,7 @@ def main(forcePlayerJokers=None):
     partialHandIndices = None
     discardPile = []
     fourFingers = 5
+    printMode = (0, 1, 2)
 
     hasHand = getHasHand()
     chipMultTable = getChipMultTable()
@@ -605,14 +606,17 @@ def main(forcePlayerJokers=None):
     jokerState1 = JokerState(playerJokers, data.commonJokers, data.uncommonJokers, data.rareJokers)
 
     clearConsole()
+
     if not FAST_MODE:
         text_ui.printInstructions()
         time.sleep(speeds[3])
 
     # deck selection
-    # if not FAST_MODE: selectedDeck = deckSelection(allDecks)
-    # else: selectedDeck = 0
-    gameState1.selectedDeck = deckSelection(allDecks)
+    if not FAST_MODE:
+        gameState1.selectedDeck = deckSelection(allDecks)
+    else:
+        gameState1.selectedDeck = "Red Deck"
+
 
     # apply new deck
     deck_functions.applyDeck(gameState1.selectedDeck, roundState1, jokerState1, gameState1)
@@ -622,7 +626,6 @@ def main(forcePlayerJokers=None):
         jokerSelection(jokerState1)
     else:
         playerJokers = ["Four Fingers", "Burnt Joker"]
-    #jokerSelection(jokerState1)
 
     # apply jokers that affect deck, hand
     for jokers in playerJokers:
@@ -653,9 +656,11 @@ def main(forcePlayerJokers=None):
                 print(score, "is less than ", requiredScores[currentLevel], ".\nGame Over")
                 sys.exit(0)
 
-            text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, 0)
+            text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, printMode)
+            printMode = (2,)
             text_ui.printHand(hand)
             print("Deck Length:", len(deck))
+
             userInput = input()
             userInputAction = userInput[0].lower()
             userInputCardIndex = userInput[1:].strip()
@@ -664,7 +669,7 @@ def main(forcePlayerJokers=None):
             # Limit hand / discard size
             if len(selectedIndicesSet) > 5:
                 print("Error: selected too many cards")
-                text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, 2)
+                text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, (0,))
                 continue
 
             # DISCARD
@@ -681,18 +686,21 @@ def main(forcePlayerJokers=None):
 
                 if "Burnt Joker" in playerJokers and totalDiscards == currentDiscards + 1:
                     tempHasHand = getHasHand()
-                    # TODO handle high card (its the first evalHand return variable)
-                    _, _, foundHands = evalHand(discarded, tempHasHand, fourFingers)
-                    upgradeName = findHighestHandName(foundHands)
-                    upgradeIndex = handNameToIndex(upgradeName, hasHand)
-                    print(foundHands) # TODO
-                    print(upgradeName, upgradeIndex) # TODO
+                    foundMultiCardHand, _, foundHands = evalHand(discarded, tempHasHand, fourFingers)
+
+                    if foundMultiCardHand:
+                        upgradeName = findHighestHandName(foundHands)
+                        upgradeIndex = handNameToIndex(upgradeName, hasHand)
+                    else:
+                        upgradeName = "hasHighHand"
+                        upgradeIndex = 11
+
                     for i, handType in enumerate(chipMultTable):
                         if i == upgradeIndex:
                             handType[4] += 1
                             text_ui.slowPrint("Burnt Joker: " + upgradeName[3::] + " Level: "
                                               + str(handType[4] - 1) + " -> " + str(handType[4]))
-                print(chipMultTable) # TODO
+
                 # todo to do Handle Trading Card
                 # todo to do Handle new jokers that delete certain ranks
 
@@ -738,12 +746,13 @@ def main(forcePlayerJokers=None):
 
             elif userInputAction == "d" and currentDiscards == 0:
                 print("Error: Out of Discards. Try Again")
-                text_ui.mainLoopPrompt(requiredScores[currentLevel], score, currentHands, currentDiscards, 2)
+                time.sleep(speeds[3])
                 continue
 
             # help
             elif userInputAction == "?":
                 print('"q" to quit\n"c" to clear text\n"j" to view jokers\n"v" to view deck')
+                time.sleep(speeds[3])
 
             # QUIT
             elif userInputAction == "q":
@@ -756,12 +765,14 @@ def main(forcePlayerJokers=None):
             # JOKERS
             elif userInputAction == "j":
                 text_ui.printJokers(playerJokers)
+                time.sleep(speeds[3])
 
             # VIEW DECK
             elif userInputAction == "v":
                 # Temp variable to prevent changing deck order
                 remainingDeckTemp = deck_functions.orderSuit(deck)
                 text_ui.printDeck(baseCards, remainingDeckTemp)
+                time.sleep(speeds[3])
 
             else:
                 clearConsole()
