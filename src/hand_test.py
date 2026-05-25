@@ -1,3 +1,4 @@
+import data
 import deck_functions
 import game
 
@@ -15,7 +16,8 @@ if TEST_RANDOM:
         handGen, deckGen = game.generateHand(8, baseCards)
         handGen = game.orderRank(handGen)
         print(handGen)
-        x = game.evalHand(handGen, 5)
+        hasHand = game.getHasHand()
+        x = game.evalHand(handGen, hasHand, 5)
         print(x)
         if x[0] is True:
             found = True
@@ -46,10 +48,10 @@ testHandNames = ["ihStraight", "ihStraightFake", "ihStraightFake2",
 
 if not TEST_RANDOM:
     fourFingers = 5 # off
-    for i in range(len(testHandNames)):
+    for i, _ in enumerate(testHandNames):
         # Reset hasHand for each test case
         hasHand = game.getHasHand()
-        chipMultTable = game.getChipMultTable()
+        chipMultTable = data.chipMultTable
 
         if testHandNames[i] == "Four Fingers Flush":
             fourFingers = 4 # on

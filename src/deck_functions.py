@@ -1,6 +1,13 @@
 import random
 import data
 
+def getBaseCards():
+    baseCards = []
+    for suit in ["C", "D", "H", "S"]:
+        for rank in range(1, 14):
+            baseCards.append(str(rank) + suit)
+    return baseCards
+
 def redDeck(roundState, gameState):
     gameState.totalDiscards += 1
     roundState.currentDiscards = gameState.totalDiscards
@@ -32,20 +39,20 @@ def gamblerDeck(jokerState):
 def highRollerDeck(jokerState):
     drawRandomJoker(jokerState.rareJokers, jokerState)
 
-def cobbleDeck(roundState, gameState):
-    for i in range(len(roundState.baseCards)):
+def cobbleDeck(gameState):
+    for i, _ in enumerate(gameState.baseCards):
         if gameState.baseCards[i][:-1] in {"11", "12", "13"}:
             gameState.baseCards[i] = "50" + gameState.baseCards[i][-1]
 
 def erraticDeck(gameState):
-    for i in range(len(gameState.baseCards)):
+    for i, _ in enumerate(gameState.baseCards):
         rank = random.randint(1, 13)
         suit = random.choice(["S", "H", "D", "C"])
         gameState.baseCards[i] = str(rank) + suit
     gameState.baseCards = orderSuit(gameState.baseCards)
 
 def jungleDeck(gameState):
-    for i in range(len(gameState.baseCards)):
+    for i, _ in enumerate(gameState.baseCards):
         if gameState.baseCards[i][:-1] in {"11", "12", "13"}:
             gameState.baseCards[i] = gameState.baseCards[i][0] + "X"
 
@@ -57,6 +64,7 @@ def drawRandomJoker(pool, jokerState, count=1):
         jokerState.playerJokers.append([key, item])
 
 def applyDeck(selectedDeck, roundState, jokerState, gameState):
+    # The integer represents which variables are required. 0 = gameState, 1 = roundState, gameState, 2 = jokerState
     deckFunctions = {
         "Red Deck": (redDeck, 1),
         "Blue Deck": (blueDeck, 1),
@@ -67,7 +75,7 @@ def applyDeck(selectedDeck, roundState, jokerState, gameState):
         "Green Deck": (greenDeck, 2),
         "Gambler Deck": (gamblerDeck, 2),
         "High Roller Deck": (highRollerDeck, 2),
-        "Cobble Deck": (cobbleDeck, 1),
+        "Cobble Deck": (cobbleDeck, 0),
         "Erratic Deck": (erraticDeck, 0),
         "Jungle Deck": (jungleDeck, 0),
     }

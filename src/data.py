@@ -89,3 +89,19 @@ allDecks = {
     "Erratic Deck": "All Ranks and Suits in deck are randomized",
     "Jungle Deck": "All Face Cards become Wild Cards (Counts as all Suits)"
 }
+
+chipMultTable = [
+    [160, 16, 50, 3, 1],  # flush five
+    [140, 14, 40, 4, 1],  # flush house
+    [120, 12, 35, 3, 1],  # five of a kind
+    [100, 8, 40, 4, 1],  # Straight Flush
+    [60, 7, 30, 3, 1],  # four of a kind
+    [40, 4, 25, 2, 1],  # full house
+    [35, 4, 15, 2, 1],  # flush
+    [30, 4, 30, 3, 1],  # straight
+    [30, 3, 20, 2, 1],  # three of a kind
+    [20, 2, 20, 1, 1],  # two pair
+    [10, 2, 15, 1, 1],  # pair
+    [5, 1, 10, 1, 1],  # high card
+]
+# chip, mult, x*lvl (chip scale), x*lvl (mult scale), lvl
