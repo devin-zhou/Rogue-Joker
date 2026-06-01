@@ -10,7 +10,6 @@ import data
 import deck_functions
 import text_ui
 
-
 DEBUG_MODE = 0
 
 FAST_MODE = True
@@ -58,11 +57,11 @@ class GameState:
     def __init__(self, baseCards):
         self.selectedDeck = None
         self.baseCards = baseCards
-        self.handSize = 8
-        self.totalHands = 4
-        self.totalDiscards = 3
+        # handSize, totalHands, totalDiscards
+        self.totalValues = [8, 4, 3]
         self.currentLevel = 0
         self.requiredScores = [5000, 10000, 20000, 50000]
+        self.chipMultTable = None
 
     def getChipMultTable(self):
         self.chipMultTable = data.chipMultTable
@@ -77,6 +76,9 @@ class JokerState:
     def __init__(self, playerJokers):
         self.playerJokers = playerJokers
         self.fourFingers = 5
+        self.commonJokers = None
+        self.uncommonJokers = None
+        self.rareJokers = None
 
     def initJokerPool(self):
         self.commonJokers = data.commonJokers
@@ -88,17 +90,25 @@ class JokerState:
             self.fourFingers = 4
 
 class RoundState:
-    def __init__(self, currentHands, currentDiscards, hasHand):
-        self.currentHands = currentHands
-        self.currentDiscards = currentDiscards
+    def __init__(self, hands, discards, hasHand):
+        self.currentHands = hands
+        self.currentDiscards = discards
         self.hasHand = hasHand
+        self.score = None
         self.resetValues()
-    
+
     def resetValues(self):
         self.chip = 0
         self.mult = 0
         self.XMult = 1
         self.score = 0
+
+    # next level
+    def resetRound(self, hands, discards):
+        self.resetValues()
+        self.currentHands = hands
+        self.currentDiscards = discards
+        self.hasHand = getHasHand()
 
 def generateHand(handSize, baseCards) -> tuple:
     deck = copy.deepcopy(baseCards)
@@ -303,46 +313,46 @@ def getHasHand():
     }
 
 
-def mainLoopPlay(roundState1, jokerState1, gameState1, selectedIndicesSet, hand, discardPile):
-    roundState1.currentHands -= 1
+def mainLoopPlay(rs1, js1, gs1, selectedIndicesSet, hand, deck, discardPile):
+    rs1.currentHands -= 1
     playedHand = [card for i, card in enumerate(hand) if i in selectedIndicesSet]
     # SORTS the inputted hand before evaluating
     playedHand = deck_functions.orderRank(playedHand)
     print("You played:", playedHand)
     # notHighCard lets us know if it's a multi card hand thats being scored
-    notHighCard, partialHandIndices, roundState1.hasHand = evalHand(playedHand, roundState1.hasHand, jokerState1.fourFingers)
+    notHighCard, partialHandIndices, rs1.hasHand = evalHand(playedHand, rs1.hasHand, js1.fourFingers)
 
-    chip, mult, XMult, scoredCards = scoreHand(playedHand, partialHandIndices, notHighCard, jokerState1.fourFingers, gameState1.chipMultTable, roundState1.hasHand)
+    chip, mult, XMult, scoredCards = scoreHand(playedHand,partialHandIndices,notHighCard,js1.fourFingers,gs1.chipMultTable,rs1.hasHand)
     text_ui.printEquation(chip, mult)
 
     chip, mult, XMult = endJokerCalculation(
-        chip, mult, XMult, jokerState1.playerJokers, scoredCards, roundState1
+        chip, mult, XMult, js1.playerJokers, scoredCards, rs1
     )
     XMult = XMult if XMult == 1 else XMult - 1
 
     text_ui.endOfCalcPrint(chip, mult, XMult)
-    score += chip * (mult * XMult)
+    rs1.score += chip * (mult * XMult)
     text_ui.slowPrint("Total level Score", None, speeds[2])
     time.sleep(speeds[3])
-    
-    if score > gameState1.getcurrentScoreRequired():
-        text_ui.rainbowText(score)
+
+    if rs1.score > gs1.getCurrentScoreRequired():
+        text_ui.rainbowText(rs1.score)
     else:
-        text_ui.slowPrint(score, None, speeds[2])
+        text_ui.slowPrint(rs1.score, None, speeds[2])
     print()
     print()
 
     # Resets playedHand
     keptCards = [card for card in hand if card not in playedHand]
-    hand, deck = drawCards(keptCards, deck, gameState1.handSize)
+    hand, deck = drawCards(keptCards, deck, gs1.totalValues[0])
     discardPile.append(playedHand)
-    
-    return hand, deck, score, discardPile
+
+    return hand, deck, rs1.score, discardPile
 
 
 # Checks for multi-card hand types and stores the found hands in a dict
 # Returns tuple (True/False if its highcard, list of lists with the indices of scored cards from partial hand types)
-def evalHand(hand: list, foundHands, fourFingers) -> tuple:
+def evalHand(hand: list, foundHands: dict, fourFingers: int) -> tuple:
     # Stored hands types are low to high
     partialHandIndices = [None] * 12
 
@@ -363,8 +373,10 @@ def evalHand(hand: list, foundHands, fourFingers) -> tuple:
     # Combo Whole Hands
     foundHands["hasFlushFive"] = foundHands["hasFlush"] and foundHands["hasFiveOfAKind"]
     foundHands["hasFlushHouse"] = foundHands["hasFlush"] and foundHands["hasFullHouse"]
-    foundHands["hasStraightFlush"] = foundHands["hasFlush"] and foundHands["hasStraight"]
 
+    if foundHands["hasFlush"] and foundHands["hasStraight"]:
+        foundHands["hasStraightFlush"] = True
+        partialHandIndices[8] = set(partialHandIndices[5]) | set(partialHandIndices[4])
 
     foundMultiCardHand = any(foundHands.values())
 
@@ -373,7 +385,7 @@ def evalHand(hand: list, foundHands, fourFingers) -> tuple:
 
     # Returns True if any Poker Hands are found, returns False for High Card,
     # a DICT with all the found hand types as keys with True/False as values
-    # and a LIST containting the indices of the SCORED cards for partial hand types (high card, pair, etc)
+    # and a LIST containing the indices of the SCORED cards for partial hand types (high card, pair, etc)
     return foundMultiCardHand, partialHandIndices, foundHands
 
 # Returns the index of the high card in the hand
@@ -504,15 +516,15 @@ def deckSelection(allDecks) -> int:
 
 
 
-def endJokerCalculation(chip, mult, XMult, playerJokers, scoredCards, roundState1) -> tuple:
+def endJokerCalculation(chip, mult, XMult, playerJokers, scoredCards, rs1) -> tuple:
     # to do todo: remove this testing block
     #allJokers = commonJokers | uncommonJokers | rareJokers
     #for i, v in enumerate(allJokers):  # Gives player every joker
         #playerJokers.append(v)
 
     #playerJokers = ["Stuntman", "Cavendish"]  # to do todo: remove
-    
-    hasHand = roundState1.hasHand
+
+    hasHand = rs1.hasHand
 
     noSuitHand = removeSuits(scoredCards)
     time.sleep(speeds[3])
@@ -552,7 +564,7 @@ def endJokerCalculation(chip, mult, XMult, playerJokers, scoredCards, roundState
                     text_ui.slowPrint("Droll Joker: +10", "mult")
                     mult += 10
             case "Mystic Summit":
-                if roundState1.currentDiscards == 0:
+                if rs1.currentDiscards == 0:
                     text_ui.slowPrint("Mystic Summit: +15", "mult")
                     mult += 15
             case "Half Joker":
@@ -605,15 +617,20 @@ def clearConsole():
 
 
 
-def main(forcePlayerJokers = None):
-    playerJokers = [] if forcePlayerJokers is None else forcePlayerJokers
+def main(playerJokers = None, setSeed = None):
+    random.seed(setSeed)
+
+    # prevent dangerous-default-value
+    if playerJokers is None:
+        playerJokers = []
+
     discardPile = []
     printMode = (0, 1, 2)
 
-    gameState1 = GameState(baseCards = deck_functions.getBaseCards())
-    gameState1.getChipMultTable()
-    roundState1 = RoundState(currentHands = 4, currentDiscards = 3, hasHand = getHasHand())
-    jokerState1 = JokerState(playerJokers)
+    gs1 = GameState(baseCards = deck_functions.getBaseCards())
+    gs1.getChipMultTable()
+    rs1 = RoundState(currentHands = gs1.totalValues[1], currentDiscards = gs1.totalValues[2], hasHand = getHasHand())
+    js1 = JokerState(playerJokers)
 
     clearConsole()
 
@@ -622,54 +639,54 @@ def main(forcePlayerJokers = None):
 
     # deck selection
     if not FAST_MODE:
-        gameState1.chooseDeck(data.allDecks)
+        gs1.chooseDeck(data.allDecks)
     else:
-        gameState1.selectedDeck = "Red Deck"
+        gs1.selectedDeck = "Red Deck"
 
 
     # apply new deck
-    deck_functions.applyDeck(gameState1.selectedDeck, roundState1, jokerState1, gameState1)
+    deck_functions.applyDeck(gs1.selectedDeck, rs1, js1, gs1)
 
     # Joker Selection from joker shop
     if not FAST_MODE:
         # insert deck dependency here
         #
-        jokerState1.initJokerPool()
-        jokerSelection(jokerState1)
+        js1.initJokerPool()
+        jokerSelection(js1)
     else:
-        jokerState1.playerJokers = ["Four Fingers", "Burnt Joker"]
+        js1.playerJokers = ["Four Fingers", "Burnt Joker"]
 
     # apply jokers that affect deck, hand
-    for jokers in jokerState1.playerJokers:
+    for jokers in js1.playerJokers:
         match jokers:
             case "Stuntman":
-                gameState1.handSize -= 2
+                gs1.totalValues[0] -= 2
             case "Four Fingers":
-                jokerState1.updateFourFingers()
+                js1.updateFourFingers()
             case _:
                 pass
 
     # todo to do adjust and move to account for multiple levels
-    handWithDeck = generateHand(gameState1.handSize, gameState1.baseCards)
-    hand, deck = deck_functions.orderRank(handWithDeck[0]), handWithDeck[1]
+    handWithDeck = generateHand(gs1.totalValues[0], gs1.baseCards)
+    hand, deck = deck_functions.orderRank(handWithDeck[0]), handWithDeck[1] #to do todo put deck and maybe hand into a state object
 
     time.sleep(speeds[3])
     # Per game Loop
-    while gameState1.currentLevel < len(gameState1.requiredScores):
+    while gs1.currentLevel < len(gs1.requiredScores):
         # Per level Loop
-        currentRequiredScore = gameState1.getCurrentScoreRequired()
-        while roundState1.score < currentRequiredScore:
-            roundState1.resetValues()
+        currentRequiredScore = gs1.getCurrentScoreRequired()
+        while rs1.score < currentRequiredScore:
+            rs1.resetValues()
 
             # Reset hasHand
-            roundState1.hasHand = getHasHand()
+            rs1.hasHand = getHasHand()
 
             # Check for lose condition
-            if roundState1.currentHands <= 0 and roundState1.score < currentRequiredScore:
-                print(roundState1.score, "is less than ", currentRequiredScore, ".\nGame Over")
+            if rs1.currentHands <= 0 and rs1.score < currentRequiredScore:
+                print(rs1.score, "is less than ", currentRequiredScore, ".\nGame Over")
                 sys.exit(0)
 
-            text_ui.mainLoopPrompt(currentRequiredScore, roundState1.score, roundState1.currentHands, roundState1.currentDiscards, printMode)
+            text_ui.mainLoopPrompt(currentRequiredScore, rs1.score, rs1.currentHands, rs1.currentDiscards, printMode) # todo to do merge rs1
             printMode = (2,) # The comma is needed to make it a tuple with one element, which is what mainLoopPrompt expects
             text_ui.printHand(hand)
             print("Deck Length:", len(deck))
@@ -682,13 +699,13 @@ def main(forcePlayerJokers = None):
             # Limit hand / discard size
             if len(selectedIndicesSet) > 5:
                 print("Error: selected too many cards")
-                text_ui.mainLoopPrompt(currentRequiredScore, roundState1.score, roundState1.currentHands, roundState1.currentDiscards, (0,))
+                text_ui.mainLoopPrompt(currentRequiredScore, rs1.score, rs1.currentHands, rs1.currentDiscards, (0,))
                 continue
 
             # DISCARD
-            if userInputAction == "d" and roundState1.currentDiscards > 0:
-                roundState1.currentDiscards -= 1
-                firstDiscard = gameState1.totalDiscards == roundState1.currentDiscards + 1
+            if userInputAction == "d" and rs1.currentDiscards > 0:
+                rs1.currentDiscards -= 1
+                firstDiscard = gs1.totalValues[2] == rs1.currentDiscards + 1
                 # Removes cards from the hand based on indices
                 keptCards, discarded = [], []
                 for index, card in enumerate(hand):
@@ -697,15 +714,15 @@ def main(forcePlayerJokers = None):
                     else:
                         discarded.append(card)
 
-                if firstDiscard and "Trading Card" in jokerState1.playerJokers and len(discarded) == 1:
+                if firstDiscard and "Trading Card" in js1.playerJokers and len(discarded) == 1:
                     # Trading Card prevents the discarded card from entering the discardPile, thus removing it from the deck
                     pass
                 else:
                     discardPile.append(discarded)
 
-                if "Burnt Joker" in jokerState1.playerJokers and firstDiscard:
+                if "Burnt Joker" in js1.playerJokers and firstDiscard:
                     tempHasHand = getHasHand()
-                    foundMultiCardHand, _, foundHands = evalHand(discarded, tempHasHand, jokerState1.fourFingers)
+                    foundMultiCardHand, _, foundHands = evalHand(discarded, tempHasHand, js1.fourFingers)
 
                     if foundMultiCardHand:
                         upgradeName = findHighestHandName(foundHands)
@@ -714,7 +731,7 @@ def main(forcePlayerJokers = None):
                         upgradeName = "hasHighHand"
                         upgradeIndex = 11
 
-                    for i, handType in enumerate(gameState1.chipMultTable):
+                    for i, handType in enumerate(gs1.chipMultTable):
                         if i == upgradeIndex:
                             handType[4] += 1
                             text_ui.slowPrint("Burnt Joker: " + upgradeName[3::] + " Level: "
@@ -724,14 +741,14 @@ def main(forcePlayerJokers = None):
                 # todo to do Handle new jokers that delete certain ranks
 
                 hand = keptCards
-                hand, deck = drawCards(hand, deck, gameState1.handSize)
+                hand, deck = drawCards(hand, deck, gs1.totalValues[0])
 
             # PLAY
             elif userInputAction == "p":
-                hand, deck, score, discardPile = mainLoopPlay(roundState1, jokerState1, gameState1, selectedIndicesSet, hand, discardPile)
+                hand, deck, rs1.score, discardPile = mainLoopPlay(rs1, js1, gs1, selectedIndicesSet, hand, deck, discardPile)
 
             # Out of Discards
-            elif userInputAction == "d" and roundState1.currentDiscards == 0:
+            elif userInputAction == "d" and rs1.currentDiscards == 0:
                 print("Error: Out of Discards. Try Again")
                 time.sleep(speeds[3])
                 continue
@@ -751,14 +768,14 @@ def main(forcePlayerJokers = None):
 
             # SHOW JOKERS
             elif userInputAction == "j":
-                text_ui.printJokers(jokerState1.playerJokers)
+                text_ui.printJokers(js1.playerJokers)
                 time.sleep(speeds[3])
 
             # VIEW DECK
             elif userInputAction == "v":
                 # Temp variable to prevent changing deck order
                 remainingDeckTemp = deck_functions.orderSuit(deck)
-                text_ui.printDeck(gameState1.baseCards, remainingDeckTemp)
+                text_ui.printDeck(gs1.baseCards, remainingDeckTemp)
                 time.sleep(speeds[3])
 
             else:
@@ -767,18 +784,18 @@ def main(forcePlayerJokers = None):
                 time.sleep(speeds[1])
 
         # Beat the current level
-        if roundState1.score > currentRequiredScore:
-            print(roundState1.score, "is greater than", currentRequiredScore)
+        if rs1.score > currentRequiredScore:
+            print(rs1.score, "is greater than", currentRequiredScore)
             # Reset variables for next level
-            # todo to do: make function in gameState1 to increment and reset for next level
-            gameState1.currentLevel += 1
-            roundState1.score = 0
-            roundState1.currentHands = gameState1.totalHands
-            roundState1.currentDiscards = gameState1.totalDiscards
+            # todo to do: make function in gs1 to increment and reset for next level
+            gs1.currentLevel += 1
+            rs1.score = 0
+            rs1.currentHands = gs1.totalValues[1]
+            rs1.currentDiscards = gs1.totalValues[2]
             # baseCards = discardPile + deck + remaining cards in hand #to do todo
             print("Press enter to continue")
             input()
-            print("--- LEVEL", gameState1.currentLevel + 1, "---")  # +1 for 0 index
+            print("--- LEVEL", gs1.currentLevel + 1, "---")  # +1 for 0 index
             time.sleep(speeds[3])
 
     print("--- You win ---")
@@ -787,4 +804,5 @@ def main(forcePlayerJokers = None):
 if __name__ == "__main__":
     # Can force jokers from command line argument for testing, format should be a list of joker names (e.g. ["Stuntman", "Cavendish"])
     forcedJoker = sys.argv[1] if len(sys.argv) > 1 else None
-    main(forcedJoker)
+    forcedSeed = sys.argv[2] if len(sys.argv) > 2 else None
+    main(forcedJoker, forcedSeed)

@@ -18,9 +18,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Analysing the Rogue Joker code with pylint for errors and stylistic mistakes
-      run: |
-        pylint $(git ls-files '*.py')
     - name: Test with pytest
       run: |
         pytest
+    - name: Analysing the Rogue Joker code with pylint for errors and stylistic mistakes
+      run: |
+        pylint $(git ls-files '*.py')
