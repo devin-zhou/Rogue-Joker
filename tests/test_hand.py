@@ -31,35 +31,35 @@ def test_evalHand_straight():
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 5)
     assert foundMultiCardHand == True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     assert partialHandIndices[4] == [0, 1, 2, 3, 4], f"Expected [0, 1, 2, 3, 4] for partialHandIndices, got {partialHandIndices[4]}"
-    assert foundHands["hasStraight"] == True, f"Expected True for Straight, got {foundHands["hasStraight"]}"
+    assert foundHands["hasStraight"] == True, f"Expected True for Straight, got {foundHands['hasStraight']}"
 
 def test_evalHand_straight_fourFingers():
     hand = ["3H", "10H", "11D", "12S", "13C"]
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 4)
     assert foundMultiCardHand == True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     assert partialHandIndices[4] == [1, 2, 3, 4], f"Expected [1, 2, 3, 4] for partialHandIndices, got {partialHandIndices[4]}"
-    assert foundHands["hasStraight"] == True, f"Expected True for Straight, got {foundHands["hasStraight"]}"
+    assert foundHands["hasStraight"] == True, f"Expected True for Straight, got {foundHands['hasStraight']}"
 
 def test_evalHand_straight_fourFingers():
     hand = ["3H", "10H", "11D", "12S", "13C"]
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 4)
     assert foundMultiCardHand == True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     assert partialHandIndices[4] == [1, 2, 3, 4], f"Expected [1, 2, 3, 4] for partialHandIndices, got {partialHandIndices[4]}"
-    assert foundHands["hasStraight"] == True, f"Expected True for Straight, got {foundHands["hasStraight"]}"
+    assert foundHands["hasStraight"] == True, f"Expected True for Straight, got {foundHands['hasStraight']}"
 
 def test_evalHand_flush():
     hand = ["1H", "9H", "11H", "5H", "7H"]
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 5)
     assert foundMultiCardHand == True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     assert partialHandIndices[5] == [0, 1, 2, 3, 4], f"Expected [0, 1, 2, 3, 4] for partialHandIndices, got {partialHandIndices[5]}"
-    assert foundHands["hasFlush"] == True, f"Expected True for Flush, got {foundHands["hasFlush"]}"
+    assert foundHands["hasFlush"] == True, f"Expected True for Flush, got {foundHands['hasFlush']}"
 
 def test_evalHand_flush_fourFingers():
     hand = ["1H", "9H", "11H", "5H", "1D"]
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 4)
     assert foundMultiCardHand == True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     assert partialHandIndices[5] == [0, 1, 2, 3], f"Expected [0, 1, 2, 3] for partialHandIndices, got {partialHandIndices[5]}"
-    assert foundHands["hasFlush"] == True, f"Expected True for Flush, got {foundHands["hasFlush"]}"
+    assert foundHands["hasFlush"] == True, f"Expected True for Flush, got {foundHands['hasFlush']}"
 
 def test_evalHand_straightFlush_fourFingers(straightFlush_fourFingers):
     hand, playerJokers = straightFlush_fourFingers
@@ -68,7 +68,7 @@ def test_evalHand_straightFlush_fourFingers(straightFlush_fourFingers):
     #[None, None, None, None, [0, 1, 2, 3], [0, 1, 2, 3], None, None, NONE, None, None, None]
     #[None, None, None, None, [0, 1, 2, 3], [0, 1, 2, 3], None, None, {0, 1, 2, 3, 4}, None, None, None]
     assert partialHandIndices[8] == {0, 1, 2, 3, 4}, f"Expected {{0, 1, 2, 3, 4}} for partialHandIndices, got {partialHandIndices[8]}"
-    assert foundHands["hasStraightFlush"] == True, f"Expected True for Straight Flush, got {foundHands["hasStraightFlush"]}"
+    assert foundHands["hasStraightFlush"] == True, f"Expected True for Straight Flush, got {foundHands['hasStraightFlush']}"
 
 def test_scoreHand_straightFlush_fourFingers(straightFlush_fourFingers):
     hand, playerJokers = straightFlush_fourFingers
