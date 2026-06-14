@@ -8,13 +8,13 @@ def getBaseCards():
             baseCards.append(str(rank) + suit)
     return baseCards
 
-def redDeck(roundState, gameState):
-    gameState.totalDiscards += 1
-    roundState.currentDiscards = gameState.totalDiscards
+def redDeck(roundState, gameState): # discards
+    gameState.totalValues[2] += 1
+    roundState.currentDiscards = gameState.totalValues[2]
 
-def blueDeck(roundState, gameState):
-    gameState.totalHands += 1
-    roundState.currentHands = gameState.totalHands
+def blueDeck(roundState, gameState): # hands
+    gameState.totalValues[1] += 1
+    roundState.currentHands = gameState.totalValues[1]
 
 def abandonedDeck(gameState):
     gameState.baseCards = data.abandonedDeck

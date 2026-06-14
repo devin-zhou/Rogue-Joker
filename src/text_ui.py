@@ -144,18 +144,17 @@ def endOfCalcPrint(chip, mult, XMult):
     print("\nHand score ", end="")
     printEquation(chip, mult, XMult)
 
-
-def mainLoopPrompt(goal, currentScore, currentHands, currentDiscards, printMode=(0,)):
+def mainLoopPrompt(goal, rs1, printMode=(0,)):
     if 0 in printMode:
         print("\nEnter " + Back.BLUE + Style.BRIGHT + "P" + Style.RESET_ALL + " followed by indices (max of 5) to play the hand. "
               + Back.RED + Style.BRIGHT + "D" + Style.RESET_ALL + " for discard. E.g. p 023")
         print("Enter " + Back.YELLOW + Style.BRIGHT + "?" + Style.RESET_ALL + " for instructions. ")
     if 1 in printMode:
-        print("Score to beat:", goal, "Current level score:", currentScore)
+        print("Score to beat:", goal, "Current level score:", rs1.score)
     if 2 in printMode:
         print(
-            f"{Fore.BLUE}Hands: {Back.BLUE}{currentHands}{Style.RESET_ALL}"
-            + f"\t{Fore.RED}Discards: {Back.RED}{currentDiscards}{Style.RESET_ALL}"
+            f"{Fore.BLUE}Hands: {Back.BLUE}{rs1.currentHands}{Style.RESET_ALL}"
+            + f"\t{Fore.RED}Discards: {Back.RED}{rs1.currentDiscards}{Style.RESET_ALL}"
         )
 
 def magPrint(handPrint):
