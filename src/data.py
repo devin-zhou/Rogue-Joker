@@ -1,7 +1,7 @@
 commonJokers = {
     "Classic Joker": ["+4 Mult", 0, 4, 1, "common", 2, 1, 0],
     "Misprint": ["+0-23 Mult", 0, 0, 1, "common", 4, 2, 0],
-    "Cavendish": ["Cavendish: X3 Mult 1 in 1000 chance you instantly lose"],
+    "Cavendish": ["X3 Mult 1 in 1000 chance you instantly lose"],
     "Lusty Joker": ["Played cards with Heart suit give +3 Mult when scored"],
     "Greedy Joker": ["Played cards with Diamond suit give +3 Mult when scored"],
     "Wrathful Joker": ["Played cards with Spade suit give +3 Mult when scored"],
@@ -15,12 +15,8 @@ commonJokers = {
     "Smiley Face": ["Played face cards give +5 Mult when scored"],
     "Half Joker": ["+20 Mult if scored hand contains 3 or fewer cards"],
     "Gros Michel": ["+15 Mult, 1 in 10 chance this is destroyed each use"],
-    "Even Steven": [
-        "Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)"
-    ],
-    "Odd Todd": [
-        "Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)"
-    ],
+    "Even Steven": ["Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)"],
+    "Odd Todd": ["Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)"],
     "Scholar": ["Played Aces give +20 Chips and +4 Mult when scored"],
 }
 # name, desc, + Chips, + Mult, X Mult, rarity, cost, sell_cost, counter (scaling)
@@ -30,13 +26,13 @@ commonJokers = {
 uncommonJokers = {
     "Four Fingers": ["All Flushes and Straights can be made with 4 cards"],
     "Acrobat": ["X3 Mult on final hand of round"],
-    "Bloodstone": [
-        "1 in 2 chance for played cards with Heart suit to give X1.5 Mult when scored"
-    ],
+    "Bloodstone": ["1 in 2 chance for played cards with Heart suit to give X1.5 Mult when scored"],
     "Arrowhead": ["Played cards with Spade suit give +50 Chips when scored"],
     "Onyx Agate": ["Played cards with Club suit give +7 Mult when scored"],
     "Fibonacci": ["Each played Ace, 2, 3, 5, or 8 gives +8 Mult when scored"],
-    "Space Joker": ["1 in 4 chance to upgrade level of played poker hand"],
+    "Space Joker": ["1 in 2 chance to upgrade level of played poker hand"],
+    "Troubadour": ["+2 hand size, -1 hand each round"],
+    "Merry Andy": ["+3 discards each round, -1 hand size"],
 }
 
 rareJokers = {
@@ -45,7 +41,7 @@ rareJokers = {
     "The Family": ["X4 Mult if played hand contains a Four of a Kind"],
     "The Order": ["X3 Mult if played hand contains a Straight"],
     "The Tribe": ["X2 Mult if played hand contains a Flush"],
-    "Brainstorm": ["Copies the ability of leftmost Joker"],
+    "Brainstorm": ["Copies the ability of your first Joker"],
     "Burnt Joker": ["Upgrade the level of the first discarded poker hand each round"],
     "Triboulet": ["Played Kings and Queens each give X2 Mult when scored"],
 }

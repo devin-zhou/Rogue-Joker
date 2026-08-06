@@ -62,6 +62,7 @@ if not TEST_RANDOM:
         notHighCard, partiaHandIndices, _ = game.evalHand(hand, hasHand, fourFingers)
 
         print("Result:")
-        game.scoreHand(hand, partiaHandIndices, notHighCard, fourFingers, chipMultTable, hasHand)
+        rs1 = game.RoundState(currentHands = 4, currentDiscards = 3, hasHand = hasHand)
+        game.scoreHand(hand, partiaHandIndices, notHighCard, fourFingers, chipMultTable, rs1)
 
         print("\n")

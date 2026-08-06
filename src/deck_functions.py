@@ -8,13 +8,11 @@ def getBaseCards():
             baseCards.append(str(rank) + suit)
     return baseCards
 
-def redDeck(roundState, gameState): # discards
+def redDeck(gameState): # discards
     gameState.totalValues[2] += 1
-    roundState.currentDiscards = gameState.totalValues[2]
 
-def blueDeck(roundState, gameState): # hands
+def blueDeck(gameState): # hands
     gameState.totalValues[1] += 1
-    roundState.currentHands = gameState.totalValues[1]
 
 def abandonedDeck(gameState):
     gameState.baseCards = data.abandonedDeck
@@ -63,11 +61,11 @@ def drawRandomJoker(pool, jokerState, count=1):
         del pool[key]
         jokerState.playerJokers.append([key, item])
 
-def applyDeck(selectedDeck, roundState, jokerState, gameState):
-    # The integer represents which variables are required. 0 = gameState, 1 = roundState, gameState, 2 = jokerState
+def applyDeck(selectedDeck, jokerState, gameState):
+    # The integer represents which variables are required. 0 = gameState, 2 = jokerState
     deckFunctions = {
-        "Red Deck": (redDeck, 1),
-        "Blue Deck": (blueDeck, 1),
+        "Red Deck": (redDeck, 0),
+        "Blue Deck": (blueDeck, 0),
         "Abandoned Deck": (abandonedDeck, 0),
         "Checkered Deck": (checkeredDeck, 0),
         "Picky Deck": (pickyDeck, 2),
@@ -79,13 +77,11 @@ def applyDeck(selectedDeck, roundState, jokerState, gameState):
         "Erratic Deck": (erraticDeck, 0),
         "Jungle Deck": (jungleDeck, 0),
     }
-    modifier = deckFunctions.get(selectedDeck)
-    if modifier[1] == 0:
-        modifier[0](gameState)
-    elif modifier[1] == 1:
-        modifier[0](roundState, gameState)
+    functionAndModifier = deckFunctions.get(selectedDeck)
+    if functionAndModifier[1] == 0:
+        functionAndModifier[0](gameState)
     else:
-        modifier[0](jokerState)
+        functionAndModifier[0](jokerState)
 
 # Orders the hand suit. Ordered by rank within each respective suit.
 def orderSuit(hand: list) -> list:

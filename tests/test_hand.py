@@ -4,6 +4,8 @@ import os
 import sys
 import pytest
 
+import game
+
 
 here = os.path.dirname(__file__)
 
@@ -12,26 +14,8 @@ import data
 from game import evalHand, getHasHand, main, scoreHand
 
 
-@pytest.fixture
-def straightFlush_fourFingers():
-    hand = ["1H", "2H", "3H", "4D", "7H"]
-    playerJokers = ["Four Fingers"]
-    return hand, playerJokers
-
 # todo to do joker eval tests
 
-@pytest.fixture
-def secretPokerHands():
-    return [
-            ['1S', '1H', '1H', '1C', '1D'], # 0 5OAK
-            ['7D', '7D', '7D', '4D', '4D'], # 1 Flush House
-            ['1S', '1S', '1S', '1S', '1S'], # 2 Flush Five
-            ['1D', '1D', '1D', '2D', '2H'], # 3 Flush House Four Fingers
-            ['10C', '10S', '10S', '10S', '10S'], # 4 Flush Five Four Fingers
-            ['1D', '1D', '1D', '2X', '2H'], # 5 Flush House Four Fingers Wild Card
-            ['10C', '10S', '10X', '10S', '10S'], # 6 Flush Five Four Fingers Wild Card
-            ['12X', '12X', '12X', '12X', '12X'], # 7 Flush Five Four Fingers ALL Wild Card
-        ]
 
 #test_seeded_mode
 def seeded_mode():
@@ -75,6 +59,27 @@ def test_evalHand_flush_fourFingers():
     assert foundMultiCardHand is True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     assert partialHandIndices[5] == [0, 1, 2, 3], f"Expected [0, 1, 2, 3] for partialHandIndices, got {partialHandIndices[5]}"
     assert foundHands["hasFlush"] is True, f"Expected True for Flush, got {foundHands['hasFlush']}"
+
+def test_evalHand_twoPair():
+    hand = ["1H", "1D", "9H", "9D", "7H"]
+    foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 5)
+    assert foundMultiCardHand is True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
+    assert partialHandIndices[2] == [0, 1, 2, 3], f"Expected [0, 1, 2, 3] for partialHandIndices, got {partialHandIndices[2]}"
+    assert foundHands["hasTwoPair"] is True, f"Expected True for Two Pair, got {foundHands['hasTwoPair']}"
+    
+def test_evalHand_fullHouse():
+    hand = ["1H", "1D", "1C", "9H", "9D"]
+    foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 5)
+    assert foundMultiCardHand is True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
+    assert partialHandIndices[6] == [3, 4, 0, 1, 2], f"Expected [3, 4, 0, 1, 2] for partialHandIndices, got {partialHandIndices[6]}"
+    assert foundHands["hasFullHouse"] is True, f"Expected True for Full House, got {foundHands['hasFullHouse']}"
+    
+def test_evalHand_fullHouse2():
+    hand = [ "2D", "2D", "10C", "10D", "10C",]
+    foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, getHasHand(), 5)
+    assert foundMultiCardHand is True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
+    assert partialHandIndices[6] == [0, 1, 2, 3, 4], f"Expected [0, 1, 2, 3, 4] for partialHandIndices, got {partialHandIndices[6]}"
+    assert foundHands["hasFullHouse"] is True, f"Expected True for Full House, got {foundHands['hasFullHouse']}"
 
 # Negative Tests
 def test_evalHand_highCard():
@@ -154,15 +159,15 @@ def test_evalhand_flushFive_fourFingers_allWildCard(secretPokerHands):
 # straightFlush_fourFingers all cards scored
 def test_evalHand_scoreHand_straightFlush_fourFingers(straightFlush_fourFingers):
     hand, playerJokers = straightFlush_fourFingers
-    hasHand = getHasHand()
-    foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, hasHand, 4)
+    rs1 = game.RoundState(currentHands = 1, currentDiscards = 1, hasHand = getHasHand())
+    foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, rs1.hasHand, 4)
     assert foundMultiCardHand is True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
     #[None, None, None, None, [0, 1, 2, 3], [0, 1, 2, 3], None, None, NONE, None, None, None]
     #[None, None, None, None, [0, 1, 2, 3], [0, 1, 2, 3], None, None, {0, 1, 2, 3, 4}, None, None, None]
     assert partialHandIndices[8] == {0, 1, 2, 3, 4}, f"Expected {{0, 1, 2, 3, 4}} for partialHandIndices, got {partialHandIndices[8]}"
     assert foundHands["hasStraightFlush"] is True, f"Expected True for Straight Flush, got {foundHands['hasStraightFlush']}"
         # this hand scores 127 * 8 = 1016
-    chip, mult, XMult, hand = scoreHand(hand, partialHandIndices, foundMultiCardHand, 4, data.chipMultTable, hasHand)
+    chip, mult, XMult, hand = scoreHand(hand, partialHandIndices, foundMultiCardHand, 4, data.chipMultTable, rs1)
     assert chip == 127, f"Expected 127 for chip, got {chip}"
     assert mult == 8, f"Expected 8 for mult, got {mult}"
     assert XMult == 1, f"Expected 1 for XMult, got {XMult}"
@@ -172,7 +177,7 @@ def test_evalHand_scoreHand_straightFlush_fourFingers(straightFlush_fourFingers)
     
 
 # straightFlush_fourFingers only 4 cards scored
-def test_scoreHand_straightFlush_fourFingers_2():
+def test_evalHand_straightFlush_fourFingers_2():
     hand = ["4H", "5H", "6H", "7H", "1C"]
     hasHand = getHasHand()
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, hasHand, 4)
