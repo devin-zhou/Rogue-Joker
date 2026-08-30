@@ -11,6 +11,7 @@ import data
 from game import main, scoreHand
 from hand_functions import evalHand
 import states
+import conftest
 
 
 # todo to do joker eval tests
@@ -155,9 +156,9 @@ def test_evalhand_flushFive_fourFingers_allWildCard(secretPokerHands):
     assert foundHands["hasFlushFive"] is True, f"Expected True for Flush Five, got {foundHands['hasFlushFive']}"
 
 
-# straightFlush_fourFingers all cards scored
-def test_evalHand_scoreHand_straightFlush_fourFingers(straightFlush_fourFingers):
-    hand, playerJokers = straightFlush_fourFingers
+# straightFlushFourFingers all cards scored
+def test_evalHand_scoreHand_straightFlushFourFingers(straightFlushFourFingers):
+    hand, playerJokers = straightFlushFourFingers
     rs1 = states.RoundState(currentHands = 1, currentDiscards = 1, hasHand = data.getHasHand())
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, rs1.hasHand, 4)
     assert foundMultiCardHand is True, f"Expected True for foundMultiCardHand, got {foundMultiCardHand}"
@@ -175,8 +176,8 @@ def test_evalHand_scoreHand_straightFlush_fourFingers(straightFlush_fourFingers)
 
     
 
-# straightFlush_fourFingers only 4 cards scored
-def test_evalHand_straightFlush_fourFingers_2():
+# straightFlushFourFingers only 4 cards scored
+def test_evalHand_straightFlushFourFingers_2():
     hand = ["4H", "5H", "6H", "7H", "1C"]
     hasHand = data.getHasHand()
     foundMultiCardHand, partialHandIndices, foundHands = evalHand(hand, hasHand, 4)

@@ -4,12 +4,12 @@ from types import SimpleNamespace
 
 here = os.path.dirname(__file__)
 sys.path.append(os.path.join(here, '../src'))
-
+#pylint: disable=wrong-import-position
 import data
 from joker_functions import classicJoker, jokerCalculation
+#pylint: enable=wrong-import-position
 
-
-def test_classic_joker_helper_increases_mult():
+def testClassicJokerHelperIncreasesMult():
     state = {
         "chip": 10,
         "mult": 1,
@@ -26,14 +26,14 @@ def test_classic_joker_helper_increases_mult():
         "currentSpeed": 0,
     }
 
-    updated_state = classicJoker(state)
+    updatedState = classicJoker(state)
 
-    assert updated_state["mult"] == 5
-    assert updated_state["chip"] == 10
-    assert updated_state["XMult"] == 1
+    assert updatedState["mult"] == 5
+    assert updatedState["chip"] == 10
+    assert updatedState["XMult"] == 1
 
 
-def test_joker_calculation_dispatches_classic_joker():
+def testJokerCalculationDispatchesClassicJoker():
     rs1 = SimpleNamespace(currentDiscards=1, currentHands=1, hasHand=data.getHasHand())
     gs1 = SimpleNamespace(chipMultTable=[])
     rs1.highestHandIndex = 11  # Set a default value for highestHandIndex

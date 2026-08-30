@@ -7,7 +7,7 @@ def tingus():
     pass
 
 @pytest.fixture
-def straightFlush_fourFingers():
+def straightFlushFourFingers():
     hand = ["1H", "2H", "3H", "4D", "7H"]
     playerJokers = ["Four Fingers"]
     return hand, playerJokers

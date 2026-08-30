@@ -3,7 +3,7 @@
 ## The hit indie game, but with an accelerated pace, that you can play in your CLI.
 
 ## Demo
-![demo](https://files.catbox.moe/i5rl2h.webp)
+![demo](https://github.com/devin-zhou/Rogue-Joker/blob/main/demo%20short%206.webp?raw=true)
 
 ## How To Install
 Recommended: Use a virtual environment to avoid conflicts with system Python packages.
