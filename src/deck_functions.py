@@ -1,4 +1,6 @@
 import random
+
+from pick import pick
 import data
 
 def getBaseCards():
@@ -104,3 +106,12 @@ def orderSuit(hand: list) -> list:
 def orderRank(hand: list) -> list:
     # It can be done in one line with the sorted() function and a lambda function / anonymous function
     return sorted(hand, key=lambda card: int(card[:-1]))
+
+
+def deckSelection(allDecks) -> int:
+    # Returns a tuple of strings with the deck name and description
+    options = tuple(map(lambda item: item[0] + " - " + item[1], allDecks.items()))
+    title = "Select a deck (ENTER to continue): "
+    selected = pick(options, title)
+    print("Selected Deck:", selected[0])
+    return options[selected[1]].split(" - ")[0] # Returns the name of the deck without the description

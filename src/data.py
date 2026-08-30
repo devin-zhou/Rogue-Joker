@@ -101,3 +101,18 @@ chipMultTable = [
     [5, 1, 10, 1, 1],  # high card
 ]
 # chip, mult, x*lvl (chip scale), x*lvl (mult scale), lvl
+
+def getHasHand():
+    return {
+        "hasFlushFive": False,
+        "hasFlushHouse": False,
+        "hasFiveOfAKind": False,
+        "hasStraightFlush": False,
+        "hasFourOfAKind": False,
+        "hasFullHouse": False,
+        "hasFlush": False,
+        "hasStraight": False,
+        "hasThreeOfAKind": False,
+        "hasTwoPair": False,
+        "hasPair": False
+    }

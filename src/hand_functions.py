@@ -1,3 +1,8 @@
+import copy
+import random
+
+import deck_functions as df
+import helper_functions as helper
 
 def removeSuits(hand):
     hand = [int(card[:-1]) for card in hand]  # Removes the suit character at the end of each index
@@ -120,3 +125,51 @@ def findFullHouse(hand: list) -> tuple:
     if hasThree and hasPair:
         return True, pairIndex + threeIndex
     return False, None
+
+# Checks for multi-card hand types and stores the found hands in a dict
+# Returns tuple (True/False if its highcard, list of lists with the indices of scored cards from partial hand types)
+def evalHand(hand: list, foundHands: dict, fourFingers: int) -> tuple:
+    # Stored hands types are low to high
+    partialHandIndices = [None] * 12
+
+    # Whole Hands
+    foundHands["hasFlush"], partialHandIndices[5] = findFlush(hand, fourFingers)
+    foundHands["hasStraight"], partialHandIndices[4] = findStraight(hand, fourFingers)
+    foundHands["hasFiveOfAKind"] = findFiveOfAKind(hand)
+
+    # Partial Hands
+    foundHands["hasFourOfAKind"], partialHandIndices[7] = findFourOfAKind(hand)
+    foundHands["hasThreeOfAKind"], partialHandIndices[3] = findThreeOfAKind(hand)
+    if foundHands["hasThreeOfAKind"]:
+        foundHands["hasFullHouse"], partialHandIndices[6] = findFullHouse(hand)
+    foundHands["hasPair"], partialHandIndices[1] = findPair(hand)
+    if foundHands["hasPair"]:
+        foundHands["hasTwoPair"], partialHandIndices[2] = findTwoPair(hand)
+
+    # Combo Whole Hands
+    foundHands["hasFlushFive"] = foundHands["hasFlush"] and foundHands["hasFiveOfAKind"]
+    foundHands["hasFlushHouse"] = foundHands["hasFlush"] and foundHands["hasFullHouse"]
+
+    if foundHands["hasFlush"] and foundHands["hasStraight"]:
+        foundHands["hasStraightFlush"] = True
+        partialHandIndices[8] = set(partialHandIndices[5]) | set(partialHandIndices[4])
+
+    foundMultiCardHand = any(foundHands.values())
+
+    if not foundMultiCardHand:  # High Card
+        partialHandIndices[0] = helper.highCardFinder(hand, True)
+
+    # Returns True if any Poker Hands are found, returns False for High Card,
+    # a DICT with all the found hand types as keys with True/False as values
+    # and a LIST containing the indices of the SCORED cards for partial hand types (high card, pair, etc)
+    return foundMultiCardHand, partialHandIndices, foundHands
+
+def generateHand(handSize, baseCards) -> tuple:
+    deck = copy.deepcopy(baseCards)
+    random.shuffle(deck)
+    return deck[0:handSize], deck[handSize:]
+
+
+def drawCards(hand, deck, handSize) -> tuple:
+    numNewCards = handSize - len(hand)
+    return df.orderRank(hand + deck[0:numNewCards]), deck[numNewCards:]

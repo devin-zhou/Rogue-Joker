@@ -2,7 +2,7 @@ import time
 
 from colorama import Fore, Back, Style
 
-speeds = [0.01, 0.05, 0.075, 0.3]
+speeds = [0.01, 0.05, 0.075, 0.3, 0.5, 0.75, 1] #seconds
 
 def printJokers(jokers, shop=False):
     for j, joker in enumerate(jokers):
@@ -44,18 +44,6 @@ def colorCard(card):
             print(Style.BRIGHT + Fore.MAGENTA + card, end="")
     print(Style.RESET_ALL, end="")
 
-def printEquation(chip, mult, XMult=None):
-    if XMult is None:
-        print(
-            f"{Fore.BLUE+Style.BRIGHT}{chip}{Style.RESET_ALL} * {Fore.RED+Style.BRIGHT}{mult}{Style.RESET_ALL}"
-            + f" = {Style.BRIGHT}{chip * mult}"
-        )
-    else:
-        print(
-            f"{Fore.BLUE+Style.BRIGHT}{chip}{Style.RESET_ALL} * {Fore.RED+Style.BRIGHT}{mult}{Style.RESET_ALL}"
-            + f" * {Fore.RED+Back.WHITE+Style.BRIGHT}{XMult}{Style.RESET_ALL} = {Style.BRIGHT}{chip * (mult * XMult)}"
-        )
-    print(Style.RESET_ALL, end="")
 
 def rainbowText(text):
     colours = [
@@ -76,7 +64,7 @@ def rainbowText(text):
     print(Style.RESET_ALL)  # Reset color at the end
 
 
-def slowPrint(word, colourType = None, speed=speeds[1]):
+def slowPrint(word, colourType = None, speed=speeds[2]):
     for char in str(word):
         time.sleep(speed)
         if colourType == "chip":
@@ -132,17 +120,34 @@ def endOfCalcPrint(chip, mult, XMult):
     print(Fore.BLUE + "\nTotal Chips:" + Style.RESET_ALL)
     slowPrint(chip, "chip")
 
-    time.sleep(speeds[3])
+    time.sleep(speeds[4])
     print(Fore.RED + "\nTotal Mult:" + Style.RESET_ALL)
     slowPrint(mult, "mult")
 
-    time.sleep(speeds[3])
-    print(Fore.RED + Back.WHITE + "\nTotal XMult:" + Style.RESET_ALL)
+    time.sleep(speeds[4])
+    print("\n" + Fore.RED + Back.WHITE + "Total XMult:" + Style.RESET_ALL)
     slowPrint(XMult, "XMult")
 
-    time.sleep(speeds[3])
-    print("\nHand score ", end="")
+    slowPrint("\nHand score ", None, speeds[0])
+    time.sleep(speeds[4])
     printEquation(chip, mult, XMult)
+    time.sleep(speeds[5])
+
+def printEquation(chip, mult, XMult=None):
+    time.sleep(speeds[1])
+    if XMult is None:
+        XMult = 1
+        print(
+            f"{Fore.BLUE+Style.BRIGHT}{chip}{Style.RESET_ALL} * {Fore.RED+Style.BRIGHT}{mult}{Style.RESET_ALL} = ", end = "", flush=True
+        )
+    else:
+        print(
+            f"{Fore.BLUE+Style.BRIGHT}{chip}{Style.RESET_ALL} * {Fore.RED+Style.BRIGHT}{mult}{Style.RESET_ALL}"
+            + f" * {Fore.RED+Back.WHITE+Style.BRIGHT}{XMult}{Style.RESET_ALL} = ", end = "", flush=True
+        )
+    time.sleep(speeds[3])
+    print(f"{Style.BRIGHT}{round(chip * (mult * XMult))}")
+    print(Style.RESET_ALL, end="")
 
 def mainLoopPrompt(goal, rs1, printMode=(0,)):
     if 0 in printMode:
@@ -158,4 +163,4 @@ def mainLoopPrompt(goal, rs1, printMode=(0,)):
         )
 
 def magPrint(handPrint):
-    print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + handPrint + Style.RESET_ALL, end=" ",)
+    print(Fore.LIGHTMAGENTA_EX + Style.BRIGHT + handPrint + Style.RESET_ALL,end=" ",flush=True)

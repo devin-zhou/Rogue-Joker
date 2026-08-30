@@ -1,8 +1,11 @@
 import data
 import deck_functions
 import game
+import states
 
-hasHand = game.getHasHand()
+import hand_functions as hf
+
+hasHand = data.getHasHand()
 
 TEST_RANDOM = False
 
@@ -17,7 +20,7 @@ if TEST_RANDOM:
         handGen = game.orderRank(handGen)
         print(handGen)
         hasHand = game.getHasHand()
-        x = game.evalHand(handGen, hasHand, 5)
+        x = hf.evalHand(handGen, hasHand, 5)
         print(x)
         if x[0] is True:
             found = True
@@ -50,7 +53,7 @@ if not TEST_RANDOM:
     fourFingers = 5 # off
     for i, _ in enumerate(testHandNames):
         # Reset hasHand for each test case
-        hasHand = game.getHasHand()
+        hasHand = data.getHasHand()
         chipMultTable = data.chipMultTable
 
         if testHandNames[i] == "Four Fingers Flush":
@@ -59,10 +62,10 @@ if not TEST_RANDOM:
         hand = deck_functions.orderRank(testHands[i])
         print(i, "-", hand)
         print("Test Case:", testHandNames[i])
-        notHighCard, partiaHandIndices, _ = game.evalHand(hand, hasHand, fourFingers)
+        notHighCard, partiaHandIndices, _ = hf.evalHand(hand, hasHand, fourFingers)
 
         print("Result:")
-        rs1 = game.RoundState(currentHands = 4, currentDiscards = 3, hasHand = hasHand)
+        rs1 = states.RoundState(currentHands = 4, currentDiscards = 3, hasHand = hasHand)
         game.scoreHand(hand, partiaHandIndices, notHighCard, fourFingers, chipMultTable, rs1)
 
         print("\n")

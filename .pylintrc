@@ -37,4 +37,12 @@ max-line-length=140
 
 [DESIGN]
 max-args=8
-max-positional-arguments=6
+max-positional-arguments=7
+max-locals = 30
+max-statements=120
+
+[main]
+max-branches = 32
+
+[pytest]
+addopts = ["-p", "no:warnings"]

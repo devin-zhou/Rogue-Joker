@@ -5,7 +5,7 @@ from types import SimpleNamespace
 here = os.path.dirname(__file__)
 sys.path.append(os.path.join(here, '../src'))
 
-import game
+import data
 from joker_functions import classicJoker, jokerCalculation
 
 
@@ -23,6 +23,7 @@ def test_classic_joker_helper_increases_mult():
         "noSuitHand": [1],
         "suitCount": {"H": 1, "D": 0, "S": 0, "C": 0, "X": 0},
         "brainstormRemove": False,
+        "currentSpeed": 0,
     }
 
     updated_state = classicJoker(state)
@@ -33,10 +34,11 @@ def test_classic_joker_helper_increases_mult():
 
 
 def test_joker_calculation_dispatches_classic_joker():
-    rs1 = SimpleNamespace(currentDiscards=1, currentHands=1, hasHand=game.getHasHand())
+    rs1 = SimpleNamespace(currentDiscards=1, currentHands=1, hasHand=data.getHasHand())
     gs1 = SimpleNamespace(chipMultTable=[])
     rs1.highestHandIndex = 11  # Set a default value for highestHandIndex
-    chip, mult, XMult = jokerCalculation(10, 1, 1, [["Classic Joker"]], ["1H"], rs1, gs1)
+
+    chip, mult, XMult = jokerCalculation([10,1,1], [["Classic Joker"]], ["1H"], rs1, gs1)
 
     assert chip == 10
     assert mult == 5
